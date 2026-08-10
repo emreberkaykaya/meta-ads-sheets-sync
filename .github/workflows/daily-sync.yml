@@ -1,0 +1,34 @@
+name: Daily Meta Ads Sync
+
+on:
+  schedule:
+    # 06:00 UTC = 09:00 Europe/Istanbul
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write Google service account file
+        run: echo "$GOOGLE_SERVICE_ACCOUNT_JSON" > service-account.json
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+
+      - name: Run sync
+        env:
+          META_ACCESS_TOKEN_AQUA_DI_POLO: ${{ secrets.META_ACCESS_TOKEN_AQUA_DI_POLO }}
+          META_ACCESS_TOKEN_FRIME: ${{ secrets.META_ACCESS_TOKEN_FRIME }}
+          META_ACCESS_TOKEN_PIERRE_CARDIN: ${{ secrets.META_ACCESS_TOKEN_PIERRE_CARDIN }}
+          GOOGLE_SERVICE_ACCOUNT_FILE: ./service-account.json
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        run: python sync.py
