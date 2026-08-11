@@ -93,17 +93,22 @@ def resolve_access_token(brand: str) -> str:
     return token
 
 
-def _sum_actions(actions, keyword, exclude=None):
-    """catalog_segment_actions / catalog_segment_value listesinden
-    action_type'ı keyword içeren (ve varsa exclude içermeyen) değerleri toplar."""
-    total = 0.0
-    found = False
-    for item in actions or []:
-        action_type = item.get("action_type", "")
-        if keyword in action_type and (not exclude or exclude not in action_type):
-            total += float(item.get("value", 0))
-            found = True
-    return total if found else None
+def _find_action_value(actions, candidates):
+    """catalog_segment_actions / catalog_segment_value listesi aynı olayı
+    (ör. bir satın alma) birden çok kırılımla AYNI ANDA döner: omni_purchase
+    (kanala göre tekilleştirilmiş toplam) ile birlikte onu oluşturan
+    onsite_app_purchase, offsite_conversion.fb_pixel_purchase,
+    app_custom_event.fb_mobile_purchase ve "purchase" alias'ı gibi alt
+    kırılımlar da ayrı satırlar olarak listede yer alır. Bunların hepsini
+    toplamak aynı satın almayı 3-4 kez saymaya yol açar, bu yüzden
+    candidates sırasına göre TEK bir kanonik action_type seçiyoruz
+    (öncelik: omni_*, yoksa genel alias)."""
+    by_type = {item.get("action_type"): item.get("value") for item in (actions or [])}
+    for candidate in candidates:
+        value = by_type.get(candidate)
+        if value is not None:
+            return float(value)
+    return None
 
 
 def _first_roas(*roas_lists):
@@ -144,10 +149,10 @@ def fetch_account_insights(ad_account_id: str, access_token: str, date_preset: s
 
     return {
         "spend": row.get("spend"),
-        "content_views": _sum_actions(actions, "view_content"),
-        "add_to_cart": _sum_actions(actions, "add_to_cart"),
-        "purchases": _sum_actions(actions, "purchase", exclude="add_to_cart"),
-        "purchase_value": _sum_actions(values, "purchase", exclude="add_to_cart"),
+        "content_views": _find_action_value(actions, ["omni_view_content", "view_content"]),
+        "add_to_cart": _find_action_value(actions, ["omni_add_to_cart", "add_to_cart"]),
+        "purchases": _find_action_value(actions, ["omni_purchase", "purchase"]),
+        "purchase_value": _find_action_value(values, ["omni_purchase", "purchase"]),
         "roas": _first_roas(
             row.get("catalog_segment_value_omni_purchase_roas"),
             row.get("catalog_segment_value_website_purchase_roas"),
@@ -208,7 +213,7 @@ def main():
                 ])
 
         worksheet.clear()
-        worksheet.update("A1", rows, value_input_option="USER_ENTERED")
+        worksheet.update(range_name="A1", values=rows, value_input_option="USER_ENTERED")
         total_rows += len(rows) - 1
 
     print(f"Toplam {total_rows} satır, {len(AD_ACCOUNTS)} marka sekmesine yazıldı (Dün/Son 7 Gün/Bu Ay).")
