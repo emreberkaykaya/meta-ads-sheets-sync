@@ -3,7 +3,7 @@ Meta (Facebook/Instagram) Ads -> Google Sheets anlık rapor senkronizasyonu.
 
 Aqua di Polo, Frime ve Pierre Cardin markalarının Trendyol/Hepsiburada
 CPAS hesaplarındaki "shared items" (collaborative ads / catalog segment)
-metriklerini üç sabit dönem için (Dün / Son 7 Gün / Bu Ay) çekip her
+metriklerini üç sabit dönem için (Dün / Son 7 Gün / Bu Ay / Geçen Ay) çekip her
 markanın kendi sekmesine yazar.
 
 Her çalıştırma sekmedeki eski veriyi TEMİZLER ve güncel anlık durumu
@@ -52,11 +52,16 @@ BRAND_TOKEN_ENV_VAR = {
     "Pierre Cardin": "META_ACCESS_TOKEN_PIERRE_CARDIN",
 }
 
-# Sabit üç dönem: (görünen isim, Graph API date_preset)
+# Sabit dönemler: (görünen isim, Graph API date_preset, gösterim sırası).
+# "Bu Ay" ve "Geçen Ay" birbirini kapsamayan ayrı takvim aralıkları olduğu
+# için (nested değiller), metrik büyüklüğüne göre sıralamak kronolojik
+# sırayı garanti etmez — bu yüzden açık bir "Sıra" sütunu tutuyoruz ve
+# Looker Studio tablolarını buna göre sıralıyoruz.
 PERIODS = [
-    ("Dün", "yesterday"),
-    ("Son 7 Gün", "last_7d"),
-    ("Bu Ay", "this_month"),
+    ("Dün", "yesterday", 1),
+    ("Son 7 Gün", "last_7d", 2),
+    ("Bu Ay", "this_month", 3),
+    ("Geçen Ay", "last_month", 4),
 ]
 
 INSIGHTS_FIELDS = [
@@ -71,6 +76,7 @@ INSIGHTS_FIELDS = [
 
 SHEET_HEADER = [
     "Dönem",
+    "Sıra",
     "Kanal",
     "Ad Account ID",
     "Amount Spent",
@@ -190,7 +196,7 @@ def main():
         rows = [SHEET_HEADER]
 
         for channel, ad_account_id in channels.items():
-            for period_label, date_preset in PERIODS:
+            for period_label, date_preset, sort_order in PERIODS:
                 print(f"Çekiliyor: {brand} / {channel} / {period_label} ({ad_account_id})...")
                 try:
                     metrics = fetch_account_insights(ad_account_id, access_token, date_preset)
@@ -200,6 +206,7 @@ def main():
 
                 rows.append([
                     period_label,
+                    sort_order,
                     channel,
                     f"'{ad_account_id}",  # başına ' koyup bilimsel gösterimi engelliyoruz
                     metrics["spend"],
@@ -216,7 +223,7 @@ def main():
         worksheet.update(range_name="A1", values=rows, value_input_option="USER_ENTERED")
         total_rows += len(rows) - 1
 
-    print(f"Toplam {total_rows} satır, {len(AD_ACCOUNTS)} marka sekmesine yazıldı (Dün/Son 7 Gün/Bu Ay).")
+    print(f"Toplam {total_rows} satır, {len(AD_ACCOUNTS)} marka sekmesine yazıldı (Dün/Son 7 Gün/Bu Ay/Geçen Ay).")
 
 
 if __name__ == "__main__":
