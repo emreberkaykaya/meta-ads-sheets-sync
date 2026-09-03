@@ -1,4 +1,4 @@
-<title>Shared Items Defteri</title>
+<title>Performance Marketing Raporu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -76,19 +76,25 @@ body{
 .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .range{font-size:11.5px;color:var(--muted);padding-left:3px}
 
-/* ---- summary ---- */
-.summary{background:var(--surface);border:1px solid var(--line);border-radius:12px;
-  box-shadow:var(--shadow);display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;overflow:hidden}
-.fig{padding:18px 22px;display:flex;flex-direction:column;gap:6px;
-  border-left:1px solid var(--line-soft);min-width:0}
-.fig:first-child{border-left:0;background:var(--surface-2)}
-.fig .v{font-family:Archivo,sans-serif;font-weight:700;letter-spacing:-.022em;
-  font-size:27px;line-height:1.05;font-variant-numeric:tabular-nums}
-.fig.lead .v{font-size:42px;letter-spacing:-.035em}
-.fig .sub{font-size:12px;color:var(--muted);line-height:1.45}
-.gauge-row{display:flex;align-items:center;gap:16px;margin-top:2px}
-.gauge{width:118px;height:70px;flex:none}
-.gauge-txt{display:flex;flex-direction:column;gap:5px;min-width:0}
+/* ---- marka kartları ---- */
+.brands{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.bcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow);padding:16px 20px 18px;display:flex;flex-direction:column;gap:12px;
+  border-top:3px solid var(--bc)}
+.bname{font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.018em}
+.gauge-row{display:flex;align-items:center;gap:14px}
+.gauge{width:112px;height:66px;flex:none}
+.gauge-txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.broas{font-family:Archivo,sans-serif;font-weight:700;font-size:38px;line-height:1;
+  letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--bc)}
+.blabel{font-size:11.5px;color:var(--muted);line-height:1.4}
+.bstats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0;
+  padding-top:12px;border-top:1px solid var(--line-soft)}
+.bstats > div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.bstats dt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.bstats dd{margin:0;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:14px;font-weight:500}
 
 /* ---- panels & charts ---- */
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;
@@ -140,15 +146,12 @@ td .c{color:var(--muted);font-size:12px}
 .notes b{color:var(--ink-2);font-weight:600}
 
 @media (max-width:880px){
-  .summary{grid-template-columns:1fr 1fr}
-  .fig:first-child{grid-column:1/-1}
-  .fig:nth-child(2){border-left:0}
-  .fig:nth-child(n+2){border-top:1px solid var(--line-soft)}
+  .brands{grid-template-columns:1fr}
   .funnels{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:580px){
   .funnels{grid-template-columns:1fr}
-  .fig.lead .v{font-size:36px}
+  .broas{font-size:32px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -158,7 +161,7 @@ td .c{color:var(--muted);font-size:12px}
   <header class="bar">
     <div class="title">
       <span class="eyebrow">Trendyol &amp; Hepsiburada · CPAS ortak reklamlar</span>
-      <h1>Shared Items Defteri</h1>
+      <h1>Performance Marketing Raporu</h1>
       <span class="stamp"><span class="dot"></span> Meta Graph API · son senkron <span class="mono" id="stamp"></span></span>
     </div>
     <div class="periods">
@@ -167,33 +170,7 @@ td .c{color:var(--muted);font-size:12px}
     </div>
   </header>
 
-  <section class="summary" aria-label="Portföy özeti">
-    <div class="fig lead">
-      <span class="eyebrow">Harmanlanmış ROAS</span>
-      <div class="gauge-row">
-        <svg class="gauge" id="gauge" viewBox="0 0 132 78" aria-hidden="true"></svg>
-        <div class="gauge-txt">
-          <span class="v" id="s-roas"></span>
-          <span class="sub" id="s-roas-sub"></span>
-        </div>
-      </div>
-    </div>
-    <div class="fig">
-      <span class="eyebrow">Harcama</span>
-      <span class="v mono" id="s-spend"></span>
-      <span class="sub">6 hesap toplamı</span>
-    </div>
-    <div class="fig">
-      <span class="eyebrow">Ciro</span>
-      <span class="v mono" id="s-rev"></span>
-      <span class="sub" id="s-rev-sub"></span>
-    </div>
-    <div class="fig">
-      <span class="eyebrow">Satın alma</span>
-      <span class="v mono" id="s-pur"></span>
-      <span class="sub" id="s-aov"></span>
-    </div>
-  </section>
+  <section class="brands" id="brands" aria-label="Marka bazlı özet"></section>
 
   <section class="panel">
     <div class="panel-head">
@@ -418,24 +395,41 @@ function render(){
   const p = PERIODS.find(x => x.id === current);
   document.getElementById("range").textContent = p.range;
 
-  const spend = rows.reduce((s, r) => s + r.spend, 0);
-  const rev   = rows.reduce((s, r) => s + (r.value || 0), 0);
-  const pur   = rows.reduce((s, r) => s + (r.purchases || 0), 0);
-  const blended = spend ? rev / spend : 0;
-  const gaps = rows.filter(r => r.value === null).length;
-  const losing = rows.filter(r => r.roas !== null && r.roas < 1).length;
-
-  const sr = document.getElementById("s-roas");
-  sr.textContent = roasFmt(blended);
-  sr.style.color = `var(--${band(blended)})`;
-  document.getElementById("gauge").innerHTML = gauge(blended);
-  document.getElementById("s-roas-sub").textContent =
-    `Her ₺1 harcamaya ₺${tl2.format(blended)} ciro` + (losing ? ` · ${losing} hesap zararda` : "");
-  document.getElementById("s-spend").textContent = money(spend);
-  document.getElementById("s-rev").textContent   = money(rev);
-  document.getElementById("s-rev-sub").textContent = gaps ? `${gaps} hesapta ciro verisi yok` : "Shared items satışları";
-  document.getElementById("s-pur").textContent   = n(pur);
-  document.getElementById("s-aov").textContent   = pur ? `Ortalama sepet ${money(rev / pur)}` : "Satın alma yok";
+  // Markalar ayrı işler; ROAS'ları toplanmaz, her marka kendi kartında durur.
+  const brands = [...new Set(recs.map(r => r.brand))];
+  document.getElementById("brands").innerHTML = brands.map(brand => {
+    const br = rows.filter(r => r.brand === brand);
+    // ROAS yalnızca cirosu ölçülebilen kanallardan hesaplanır — verisi olmayan bir
+    // kanalın harcamasını paya katmak markanın ROAS'ını olduğundan düşük gösterirdi.
+    const measured = br.filter(r => r.value !== null);
+    const mSpend = measured.reduce((s, r) => s + r.spend, 0);
+    const mRev   = measured.reduce((s, r) => s + r.value, 0);
+    const roas   = mSpend ? mRev / mSpend : null;
+    const pur    = measured.reduce((s, r) => s + (r.purchases || 0), 0);
+    // Kartın üç rakamı aynı kanal kümesinden gelir ki harcama ÷ ciro = gösterilen ROAS olsun.
+    // Hariç tutulan kanalın harcaması aşağıdaki tabloda görünür.
+    const excluded = br.filter(r => r.value === null).map(r => r.channel);
+    const b = band(roas);
+    return `
+    <article class="bcard" style="--bc:var(--${b})">
+      <span class="bname">${esc(brand)}</span>
+      <div class="gauge-row">
+        <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(roas === null ? 0 : roas)}</svg>
+        <div class="gauge-txt">
+          <span class="broas">${roas === null ? "—" : roasFmt(roas)}</span>
+          <span class="blabel">${
+            roas === null ? "Ciro verisi yok"
+            : `₺1 harcamaya ₺${tl2.format(roas)} ciro`
+          }${excluded.length ? `<br>${esc(excluded.join(", "))} hariç — ciro verisi yok` : ""}</span>
+        </div>
+      </div>
+      <dl class="bstats">
+        <div><dt>Harcama</dt><dd>${mSpend ? money(mSpend) : "—"}</dd></div>
+        <div><dt>Ciro</dt><dd>${mRev ? money(mRev) : "—"}</dd></div>
+        <div><dt>Satış</dt><dd>${n(pur)}</dd></div>
+      </dl>
+    </article>`;
+  }).join("");
 
   paint("roas-chart", roasChart(rows));
   paint("spend-chart", spendChart(rows));
