@@ -2,3 +2,6 @@
 service-account.json
 venv/
 __pycache__/
+
+# build_dashboard.py çıktısı — her gün yeniden üretilir
+dashboard.html

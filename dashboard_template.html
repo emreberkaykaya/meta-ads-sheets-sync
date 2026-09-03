@@ -1,0 +1,473 @@
+<title>Shared Items Defteri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#e9eded;
+  --surface:#ffffff;
+  --surface-2:#f4f6f6;
+  --ink:#10181a;
+  --ink-2:#3c4a4d;
+  --muted:#66787b;
+  --line:#d2dadb;
+  --line-soft:#e4eaea;
+  --accent:#0f5d68;
+  --accent-soft:#d8e8ea;
+  --neutral-bar:#9fb0b2;
+  --pos:#1a7f5a;
+  --warn:#a76a15;
+  --crit:#b23b3b;
+  --track:#dde5e5;
+  --shadow:0 1px 2px rgba(16,24,26,.05), 0 8px 24px -16px rgba(16,24,26,.35);
+  --on-accent:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0d1314; --surface:#151d1f; --surface-2:#1b2426;
+    --ink:#e7eeee; --ink-2:#bcc9ca; --muted:#8ba0a2;
+    --line:#283436; --line-soft:#212c2e;
+    --accent:#5cb6c2; --accent-soft:#17383d; --neutral-bar:#4a5a5c;
+    --pos:#4fc294; --warn:#dda34a; --crit:#e57373;
+    --track:#232e30;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+    --on-accent:#08181b;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0d1314; --surface:#151d1f; --surface-2:#1b2426;
+  --ink:#e7eeee; --ink-2:#bcc9ca; --muted:#8ba0a2;
+  --line:#283436; --line-soft:#212c2e;
+  --accent:#5cb6c2; --accent-soft:#17383d; --neutral-bar:#4a5a5c;
+  --pos:#4fc294; --warn:#dda34a; --crit:#e57373;
+  --track:#232e30;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  --on-accent:#08181b;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--ground);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1160px;margin:0 auto;padding:22px 20px 64px;display:flex;flex-direction:column;gap:20px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:500;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+/* ---- command bar ---- */
+.bar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
+  gap:16px 24px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.title{display:flex;flex-direction:column;gap:4px}
+.title h1{margin:0;font-family:Archivo,sans-serif;font-weight:800;
+  font-size:clamp(22px,2.6vw,28px);letter-spacing:-.022em}
+.stamp{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--pos);flex:none}
+.periods{display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);
+  border-radius:8px;padding:3px;gap:2px;box-shadow:var(--shadow)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--ink-2);
+  font-family:"IBM Plex Sans",sans-serif;font-size:13px;font-weight:500;
+  padding:7px 14px;border-radius:5px;cursor:pointer;white-space:nowrap;
+  transition:background .16s ease,color .16s ease}
+.seg button:hover{background:var(--surface-2);color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.range{font-size:11.5px;color:var(--muted);padding-left:3px}
+
+/* ---- summary ---- */
+.summary{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow);display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;overflow:hidden}
+.fig{padding:18px 22px;display:flex;flex-direction:column;gap:6px;
+  border-left:1px solid var(--line-soft);min-width:0}
+.fig:first-child{border-left:0;background:var(--surface-2)}
+.fig .v{font-family:Archivo,sans-serif;font-weight:700;letter-spacing:-.022em;
+  font-size:27px;line-height:1.05;font-variant-numeric:tabular-nums}
+.fig.lead .v{font-size:42px;letter-spacing:-.035em}
+.fig .sub{font-size:12px;color:var(--muted);line-height:1.45}
+.gauge-row{display:flex;align-items:center;gap:16px;margin-top:2px}
+.gauge{width:118px;height:70px;flex:none}
+.gauge-txt{display:flex;flex-direction:column;gap:5px;min-width:0}
+
+/* ---- panels & charts ---- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow);overflow:hidden}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
+  padding:15px 22px 13px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.panel-head h2{margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15px;letter-spacing:-.012em}
+.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.legend i.tick{width:3px;height:13px;border-radius:0;vertical-align:-2px}
+.chart-scroll{overflow-x:auto;padding:16px 22px 18px}
+.chart-scroll svg{display:block;width:100%;min-width:640px;height:auto}
+.chart-scroll svg text{font-family:"IBM Plex Sans",sans-serif}
+.chart-scroll svg .n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.chart-scroll svg .brand{font-family:Archivo,sans-serif;font-weight:600}
+.chart-scroll svg .big{font-family:Archivo,sans-serif;font-weight:700}
+.bar-anim{transition:width .35s cubic-bezier(.4,0,.2,1)}
+
+/* ---- funnels ---- */
+.funnels{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-soft)}
+.fn{background:var(--surface);padding:15px 18px 16px;display:flex;flex-direction:column;gap:9px}
+.fn-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fn-head .b{font-family:Archivo,sans-serif;font-weight:600;font-size:13.5px}
+.chip{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;letter-spacing:.07em;
+  text-transform:uppercase;padding:3px 7px;border-radius:4px;background:var(--accent-soft);color:var(--accent)}
+.fn svg{display:block;width:100%;height:auto}
+.fn svg text{font-family:"IBM Plex Sans",sans-serif}
+.fn svg .n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:500}
+
+/* ---- table ---- */
+.tbl-scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th,td{text-align:right;padding:12px 16px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+th{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);background:var(--surface-2)}
+th:first-child,td:first-child{text-align:left;padding-left:22px}
+th:last-child,td:last-child{padding-right:22px}
+tbody td{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:13.5px}
+tbody td:first-child{font-family:"IBM Plex Sans",sans-serif;font-size:14px}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--surface-2)}
+td .b{font-family:Archivo,sans-serif;font-weight:600}
+td .c{color:var(--muted);font-size:12px}
+.roas-pill{display:inline-block;padding:3px 9px;border-radius:5px;font-weight:600;font-size:13px}
+
+/* ---- notes ---- */
+.notes{padding-top:8px;border-top:1px solid var(--line)}
+.notes p{margin:0;font-size:12px;color:var(--muted);line-height:1.6;max-width:78ch}
+.notes b{color:var(--ink-2);font-weight:600}
+
+@media (max-width:880px){
+  .summary{grid-template-columns:1fr 1fr}
+  .fig:first-child{grid-column:1/-1}
+  .fig:nth-child(2){border-left:0}
+  .fig:nth-child(n+2){border-top:1px solid var(--line-soft)}
+  .funnels{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:580px){
+  .funnels{grid-template-columns:1fr}
+  .fig.lead .v{font-size:36px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header class="bar">
+    <div class="title">
+      <span class="eyebrow">Trendyol &amp; Hepsiburada · CPAS ortak reklamlar</span>
+      <h1>Shared Items Defteri</h1>
+      <span class="stamp"><span class="dot"></span> Meta Graph API · son senkron <span class="mono" id="stamp"></span></span>
+    </div>
+    <div class="periods">
+      <div class="seg" role="group" aria-label="Dönem seçimi" id="seg"></div>
+      <span class="range" id="range"></span>
+    </div>
+  </header>
+
+  <section class="summary" aria-label="Portföy özeti">
+    <div class="fig lead">
+      <span class="eyebrow">Harmanlanmış ROAS</span>
+      <div class="gauge-row">
+        <svg class="gauge" id="gauge" viewBox="0 0 132 78" aria-hidden="true"></svg>
+        <div class="gauge-txt">
+          <span class="v" id="s-roas"></span>
+          <span class="sub" id="s-roas-sub"></span>
+        </div>
+      </div>
+    </div>
+    <div class="fig">
+      <span class="eyebrow">Harcama</span>
+      <span class="v mono" id="s-spend"></span>
+      <span class="sub">6 hesap toplamı</span>
+    </div>
+    <div class="fig">
+      <span class="eyebrow">Ciro</span>
+      <span class="v mono" id="s-rev"></span>
+      <span class="sub" id="s-rev-sub"></span>
+    </div>
+    <div class="fig">
+      <span class="eyebrow">Satın alma</span>
+      <span class="v mono" id="s-pur"></span>
+      <span class="sub" id="s-aov"></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>ROAS — başabaş çizgisine göre</h2>
+      <div class="legend">
+        <span><i style="background:var(--crit)"></i>zarar</span>
+        <span><i style="background:var(--warn)"></i>ince</span>
+        <span><i style="background:var(--pos)"></i>kârlı</span>
+        <span><i class="tick" style="background:var(--muted)"></i>geçen ay</span>
+      </div>
+    </div>
+    <div class="chart-scroll"><svg id="roas-chart" role="img" aria-label="Hesap bazlı ROAS grafiği"></svg></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Harcama karşılığı ciro</h2>
+      <div class="legend">
+        <span><i style="background:var(--neutral-bar)"></i>harcama</span>
+        <span><i style="background:var(--accent)"></i>ciro</span>
+        <span>ciro çubuğu kısaysa hesap para kaybediyor</span>
+      </div>
+    </div>
+    <div class="chart-scroll"><svg id="spend-chart" role="img" aria-label="Hesap bazlı harcama ve ciro grafiği"></svg></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Huni — görüntülemeden satışa</h2>
+      <span class="legend"><span>oranlar bir önceki adıma göre</span></span>
+    </div>
+    <div class="funnels" id="funnels"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Tüm rakamlar</h2></div>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr>
+          <th>Hesap</th><th>Harcama</th><th>Ciro</th><th>ROAS</th>
+          <th>Satış</th><th>Sepet</th><th>Görüntüleme</th><th>Tıklama</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="notes">
+    <p>Meta <b>catalog_segment</b> alanları — yalnızca pazaryeriyle paylaşılan katalog kalemleri.
+       <b>Bu Ay</b> ayın geçen kısmıdır, tam ay değildir. <b>“veri yok”</b> sıfır satış demek değil,
+       Meta o dönem için değer döndürmedi demektir. Huni gövdesi şekil olarak orantılı değildir; oranlar sağda yazar.</p>
+  </footer>
+</div>
+
+<script>
+/*__DATA__*/
+
+const recs = D.map(r => ({
+  brand:r[0], channel:r[1], period:r[2],
+  spend:r[3], views:r[4], atc:r[5], purchases:r[6], value:r[7], clicks:r[8],
+  roas:(r[7] === null || !r[3]) ? null : r[7]/r[3]
+}));
+
+const tl  = new Intl.NumberFormat("tr-TR",{maximumFractionDigits:0});
+const tl2 = new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const money   = v => "₺" + tl.format(Math.round(v));
+const moneyK  = v => v >= 1000 ? "₺" + tl.format(Math.round(v/1000)) + " B" : "₺" + tl.format(Math.round(v));
+const n       = v => tl.format(v);
+const roasFmt = v => tl2.format(v) + "×";
+const esc     = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+const band = r => r === null ? "muted" : r < 1 ? "crit" : r < 2 ? "warn" : "pos";
+const ROAS_MAX = 5;
+
+let current = 2;
+
+/* ---------------- charts ---------------- */
+const VB = 1000, GUT = 236, PX1 = 890, ROW = 48;
+
+function roasChart(rows){
+  const px0 = GUT, pw = PX1 - px0;
+  const H = 42 + rows.length * ROW + 6;
+  const x = v => px0 + Math.min(v, ROAS_MAX) / ROAS_MAX * pw;
+  let s = "";
+
+  for (let t = 0; t <= ROAS_MAX; t++){
+    const tx = x(t), be = t === 1;
+    s += `<line x1="${tx}" y1="34" x2="${tx}" y2="${H - 6}" stroke="var(--${be ? "ink-2" : "line-soft"})"
+          stroke-width="${be ? 1.4 : 1}" ${be ? 'opacity=".5"' : ""}></line>`;
+    s += `<text class="n" x="${tx}" y="26" text-anchor="middle" font-size="11" fill="var(--muted)">${tl2.format(t)}×</text>`;
+  }
+  s += `<text x="${x(1)}" y="12" text-anchor="middle" font-size="10.5" fill="var(--ink-2)"
+        letter-spacing=".08em">BAŞABAŞ</text>`;
+
+  rows.forEach((r, i) => {
+    const y = 42 + i * ROW, bh = 24, b = band(r.roas);
+    const prev = recs.find(z => z.brand === r.brand && z.channel === r.channel && z.period === 4);
+    s += `<text class="brand" x="${px0 - 14}" y="${y + 11}" text-anchor="end" font-size="14.5" fill="var(--ink)">${esc(r.brand)}</text>`;
+    s += `<text x="${px0 - 14}" y="${y + 26}" text-anchor="end" font-size="11.5" fill="var(--muted)">${esc(r.channel)}</text>`;
+    if (r.roas === null){
+      s += `<rect x="${px0}" y="${y}" width="${pw}" height="${bh}" rx="4" fill="var(--track)" opacity=".5"></rect>`;
+      s += `<text x="${px0 + 12}" y="${y + 16.5}" font-size="12" fill="var(--muted)">Meta bu dönem için ciro döndürmedi</text>`;
+    } else {
+      s += `<rect x="${px0}" y="${y}" width="${pw}" height="${bh}" rx="4" fill="var(--track)" opacity=".55"></rect>`;
+      s += `<rect x="${px0}" y="${y}" width="${x(r.roas) - px0}" height="${bh}" rx="4" fill="var(--${b})"></rect>`;
+      s += `<text class="big" x="${PX1 + 14}" y="${y + 17.5}" font-size="17" fill="var(--${b})">${roasFmt(r.roas)}</text>`;
+      if (prev && prev.roas !== null && current !== 4){
+        const pxp = x(prev.roas);
+        s += `<rect x="${pxp - 1.5}" y="${y - 4}" width="3" height="${bh + 8}" rx="1.5" fill="var(--muted)"></rect>`;
+      }
+    }
+  });
+  return {svg:s, H};
+}
+
+function spendChart(rows){
+  const px0 = GUT, pw = PX1 - px0 - 78;
+  const max = Math.max(...rows.map(r => Math.max(r.spend, r.value || 0))) || 1;
+  const H = 42 + rows.length * ROW + 6;
+  const w = v => Math.max(v / max * pw, v > 0 ? 2 : 0);
+  let s = "";
+
+  const step = max / 4;
+  for (let t = 0; t <= 4; t++){
+    const tx = px0 + t / 4 * pw;
+    s += `<line x1="${tx}" y1="34" x2="${tx}" y2="${H - 6}" stroke="var(--line-soft)" stroke-width="1"></line>`;
+    s += `<text class="n" x="${tx}" y="26" text-anchor="middle" font-size="11" fill="var(--muted)">${moneyK(step * t)}</text>`;
+  }
+
+  rows.forEach((r, i) => {
+    const y = 42 + i * ROW;
+    s += `<text class="brand" x="${px0 - 14}" y="${y + 11}" text-anchor="end" font-size="14.5" fill="var(--ink)">${esc(r.brand)}</text>`;
+    s += `<text x="${px0 - 14}" y="${y + 26}" text-anchor="end" font-size="11.5" fill="var(--muted)">${esc(r.channel)}</text>`;
+    s += `<rect x="${px0}" y="${y + 1}" width="${w(r.spend)}" height="12" rx="2.5" fill="var(--neutral-bar)"></rect>`;
+    s += `<text class="n" x="${px0 + w(r.spend) + 7}" y="${y + 11}" font-size="10.5" fill="var(--muted)">${moneyK(r.spend)}</text>`;
+    if (r.value === null){
+      s += `<text x="${px0 + 2}" y="${y + 28}" font-size="10.5" fill="var(--muted)">veri yok</text>`;
+    } else {
+      s += `<rect x="${px0}" y="${y + 17}" width="${w(r.value)}" height="12" rx="2.5" fill="var(--accent)"></rect>`;
+      s += `<text class="n" x="${px0 + w(r.value) + 7}" y="${y + 27}" font-size="10.5" fill="var(--ink-2)">${moneyK(r.value)}</text>`;
+    }
+  });
+  return {svg:s, H};
+}
+
+function paint(id, built){
+  const el = document.getElementById(id);
+  el.setAttribute("viewBox", `0 0 ${VB} ${built.H}`);
+  el.innerHTML = built.svg;
+}
+
+/* ---- gauge: yarım daire, 0–5× ölçek, 1,0× başabaş çentiği ---- */
+function gauge(roas){
+  const cx = 66, cy = 68, r = 52, sw = 13;
+  const pt = (rad, deg) => {
+    const a = deg * Math.PI / 180;
+    return [cx + rad * Math.cos(a), cy + rad * Math.sin(a)];
+  };
+  const arc = (from, to, color, width) => {
+    const [x0, y0] = pt(r, from), [x1, y1] = pt(r, to);
+    return `<path d="M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}" fill="none"
+            stroke="${color}" stroke-width="${width}" stroke-linecap="round"></path>`;
+  };
+  const f = Math.min(roas, ROAS_MAX) / ROAS_MAX;
+  const end = 180 + f * 180;
+  let s = arc(180, 360, "var(--track)", sw);
+  if (f > 0.004) s += arc(180, end, `var(--${band(roas)})`, sw);
+  // başabaş çentiği (1,0×)
+  const bDeg = 180 + (1 / ROAS_MAX) * 180;
+  const [bx0, by0] = pt(r - sw / 2 - 3, bDeg), [bx1, by1] = pt(r + sw / 2 + 3, bDeg);
+  s += `<line x1="${bx0}" y1="${by0}" x2="${bx1}" y2="${by1}" stroke="var(--ink-2)" stroke-width="1.6" opacity=".6"></line>`;
+  s += `<text class="n" x="${bx1 - 1}" y="${by1 - 6}" font-size="9" fill="var(--muted)" text-anchor="middle">1,0</text>`;
+  s += `<text class="n" x="12" y="77" font-size="9" fill="var(--muted)">0</text>`;
+  s += `<text class="n" x="120" y="77" font-size="9" fill="var(--muted)" text-anchor="end">5</text>`;
+  return s;
+}
+
+/* ---- huni: gerçek daralan huni gövdesi ---- */
+function funnel(r){
+  const W = 268, LX = 150, top = 14, bh = 38;
+  const H = top + bh * 3 + 10;
+  // şekil algılanabilir kalsın diye kuvvet ölçeği; gerçek sayılar sağda yazıyor
+  const wid = v => {
+    if (!r.views || v <= 0) return 12;
+    return 18 + 118 * Math.pow(v / r.views, 0.34);
+  };
+  const w1 = 136, w2 = wid(r.atc), w3 = wid(r.purchases || 0);
+  const cx = 68;
+  const seg = (y, wt, wb, fill, op) =>
+    `<path d="M${cx - wt / 2} ${y} L${cx + wt / 2} ${y} L${cx + wb / 2} ${y + bh} L${cx - wb / 2} ${y + bh} Z"
+      fill="${fill}" opacity="${op}"></path>`;
+
+  const atcRate = r.views ? r.atc / r.views * 100 : 0;
+  const buyRate = r.atc ? (r.purchases || 0) / r.atc * 100 : 0;
+
+  const label = (y, name, val, rate) => `
+    <text x="${LX}" y="${y + 15}" font-size="11" fill="var(--muted)">${name}</text>
+    <text class="n" x="${LX}" y="${y + 31}" font-size="15" fill="var(--ink)">${val}</text>
+    ${rate ? `<text class="n" x="${W - 4}" y="${y + 31}" font-size="11" fill="var(--ink-2)" text-anchor="end">${rate}</text>` : ""}`;
+
+  return `
+  <div class="fn">
+    <div class="fn-head"><span class="b">${esc(r.brand)}</span><span class="chip">${esc(r.channel)}</span></div>
+    <svg viewBox="0 0 ${W} ${H}" role="img"
+         aria-label="${esc(r.brand)} ${esc(r.channel)} hunisi: ${n(r.views)} görüntüleme, ${n(r.atc)} sepet, ${r.purchases === null ? "satın alma verisi yok" : n(r.purchases) + " satın alma"}">
+      ${seg(top, w1, w2, "var(--accent)", ".30")}
+      ${seg(top + bh, w2, w3, "var(--accent)", ".62")}
+      ${seg(top + bh * 2, w3, w3, `var(--${band(r.roas)})`, ".95")}
+      <line x1="${cx - w2 / 2}" y1="${top + bh}" x2="${cx + w2 / 2}" y2="${top + bh}" stroke="var(--surface)" stroke-width="1.5"></line>
+      <line x1="${cx - w3 / 2}" y1="${top + bh * 2}" x2="${cx + w3 / 2}" y2="${top + bh * 2}" stroke="var(--surface)" stroke-width="1.5"></line>
+      ${label(top, "Görüntüleme", n(r.views), "")}
+      ${label(top + bh, "Sepete ekleme", n(r.atc), tl2.format(atcRate) + "%")}
+      ${label(top + bh * 2, "Satın alma", r.purchases === null ? "—" : n(r.purchases),
+              r.purchases === null ? "veri yok" : tl2.format(buyRate) + "%")}
+    </svg>
+  </div>`;
+}
+
+/* ---------------- render ---------------- */
+function render(){
+  const rows = recs.filter(r => r.period === current).sort((a, b) => b.spend - a.spend);
+  const p = PERIODS.find(x => x.id === current);
+  document.getElementById("range").textContent = p.range;
+
+  const spend = rows.reduce((s, r) => s + r.spend, 0);
+  const rev   = rows.reduce((s, r) => s + (r.value || 0), 0);
+  const pur   = rows.reduce((s, r) => s + (r.purchases || 0), 0);
+  const blended = spend ? rev / spend : 0;
+  const gaps = rows.filter(r => r.value === null).length;
+  const losing = rows.filter(r => r.roas !== null && r.roas < 1).length;
+
+  const sr = document.getElementById("s-roas");
+  sr.textContent = roasFmt(blended);
+  sr.style.color = `var(--${band(blended)})`;
+  document.getElementById("gauge").innerHTML = gauge(blended);
+  document.getElementById("s-roas-sub").textContent =
+    `Her ₺1 harcamaya ₺${tl2.format(blended)} ciro` + (losing ? ` · ${losing} hesap zararda` : "");
+  document.getElementById("s-spend").textContent = money(spend);
+  document.getElementById("s-rev").textContent   = money(rev);
+  document.getElementById("s-rev-sub").textContent = gaps ? `${gaps} hesapta ciro verisi yok` : "Shared items satışları";
+  document.getElementById("s-pur").textContent   = n(pur);
+  document.getElementById("s-aov").textContent   = pur ? `Ortalama sepet ${money(rev / pur)}` : "Satın alma yok";
+
+  paint("roas-chart", roasChart(rows));
+  paint("spend-chart", spendChart(rows));
+
+  document.getElementById("funnels").innerHTML = rows.map(r => funnel(r)).join("");
+
+  document.getElementById("tbody").innerHTML = rows.map(r => {
+    const b = band(r.roas);
+    return `<tr>
+      <td><span class="b">${esc(r.brand)}</span> <span class="c">${esc(r.channel)}</span></td>
+      <td>${money(r.spend)}</td>
+      <td>${r.value === null ? "—" : money(r.value)}</td>
+      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${r.roas === null ? "veri yok" : roasFmt(r.roas)}</span></td>
+      <td>${r.purchases === null ? "—" : n(r.purchases)}</td>
+      <td>${n(r.atc)}</td>
+      <td>${n(r.views)}</td>
+      <td>${n(r.clicks)}</td>
+    </tr>`;
+  }).join("");
+
+  document.querySelectorAll("#seg button").forEach(btn =>
+    btn.setAttribute("aria-pressed", String(Number(btn.dataset.p) === current)));
+}
+
+document.getElementById("stamp").textContent = UPDATED;
+document.getElementById("seg").innerHTML = PERIODS.map(p =>
+  `<button type="button" data-p="${p.id}" aria-pressed="false">${p.label}</button>`).join("");
+document.getElementById("seg").addEventListener("click", e => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  current = Number(btn.dataset.p);
+  render();
+});
+render();
+</script>
