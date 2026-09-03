@@ -447,16 +447,16 @@ function d2cRender(){
         <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas)}</svg>
         <div class="gauge-txt">
           <span class="broas">${roasFmt(r.roas)}</span>
-          <span class="blabel">₺1 harcamaya ₺${tl2.format(r.roas)} Shopify cirosu<br>${money(r.revenue)} · ${n(r.orders)} sipariş</span>
+          <span class="blabel">₺1 harcamaya ₺${tl2.format(r.roas)} Shopify cirosu</span>
         </div>
       </div>
       <dl class="bstats">
         <div><dt>Harcama</dt><dd>${money(r.spend)}</dd></div>
+        <div><dt>Revenue</dt><dd>${money(r.revenue)}</dd></div>
         <div><dt>Reach</dt><dd>${n(r.reach)}</dd></div>
         <div><dt>Impressions</dt><dd>${n(r.impressions)}</dd></div>
         <div><dt>Clicks</dt><dd>${n(r.clicks)}</dd></div>
         <div><dt>Sipariş</dt><dd>${n(r.orders)}</dd></div>
-        <div><dt>Ort. Sepet</dt><dd>${r.orders ? money(r.revenue / r.orders) : "—"}</dd></div>
       </dl>
     </article>`; }).join("");
 
