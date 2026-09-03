@@ -79,6 +79,25 @@ body{
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);font-weight:600}
 .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .range{font-size:11.5px;color:var(--muted);padding-left:3px}
+#channel-seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) #channel-seg button[aria-pressed="true"]{color:var(--ground)}
+}
+:root[data-theme="dark"] #channel-seg button[aria-pressed="true"]{color:var(--ground)}
+
+/* ---- D2C boş durum ---- */
+.empty-state{padding:40px 32px 44px;display:flex;flex-direction:column;align-items:center;
+  text-align:center;gap:14px}
+.empty-mark{width:52px;height:52px;opacity:.8}
+.empty-mark svg{width:100%;height:100%}
+.empty-state h2{margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:18px;letter-spacing:-.015em}
+.empty-state > p{margin:0;max-width:56ch;font-size:13.5px;color:var(--muted);line-height:1.6}
+.empty-steps{display:flex;flex-direction:column;gap:10px;margin:8px 0 0;max-width:52ch;width:100%;text-align:left}
+.empty-steps > div{display:flex;gap:12px;align-items:flex-start}
+.empty-steps dt{flex:none;width:22px;height:22px;border-radius:50%;background:var(--surface-2);
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:var(--ink-2)}
+.empty-steps dd{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.55;padding-top:2px}
 
 /* ---- marka kartları ---- */
 .brands{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -166,15 +185,21 @@ td .c{color:var(--muted);font-size:12px}
 
   <header class="bar">
     <div class="title">
-      <span class="eyebrow">Trendyol &amp; Hepsiburada · CPAS ortak reklamlar</span>
+      <span class="eyebrow" id="eyebrow">Trendyol &amp; Hepsiburada · CPAS ortak reklamlar</span>
       <h1>Performance Marketing Raporu</h1>
       <span class="stamp"><span class="dot"></span> Meta Graph API · son senkron <span class="mono" id="stamp"></span></span>
     </div>
     <div class="periods">
+      <div class="seg" role="group" aria-label="Kanal seçimi" id="channel-seg">
+        <button type="button" data-c="cpas" aria-pressed="true">CPAS</button>
+        <button type="button" data-c="d2c" aria-pressed="false">D2C</button>
+      </div>
       <div class="seg" role="group" aria-label="Dönem seçimi" id="seg"></div>
       <span class="range" id="range"></span>
     </div>
   </header>
+
+  <div id="view-cpas">
 
   <section class="brands" id="brands" aria-label="Marka bazlı özet"></section>
 
@@ -251,6 +276,28 @@ td .c{color:var(--muted);font-size:12px}
        önce toplanıp sonra bölünür: <b>toplam ciro ÷ toplam harcama</b>, kanal ROAS'larının ortalaması değil.
        Huni gövdesi şekil olarak orantılı değildir; oranlar sağda yazar.</p>
   </footer>
+
+  </div>
+
+  <div id="view-d2c" hidden>
+    <section class="panel empty-state">
+      <div class="empty-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48"><path d="M8 14h32l-2.5 20a4 4 0 0 1-4 3.5H14.5a4 4 0 0 1-4-3.5L8 14Z"
+          fill="none" stroke="var(--muted)" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M16 14v-3a8 8 0 0 1 16 0v3" fill="none" stroke="var(--muted)" stroke-width="2"/></svg>
+      </div>
+      <h2>D2C mağaza verisi henüz bağlı değil</h2>
+      <p>Bu bölüm, üç markanın kendi Shopify sitelerindeki <b>gerçek toplam ciro</b> ve sipariş
+         sayısını gösterecek — pazaryeri payı değil, mağazanın tamamı. Bağlandığında CPAS
+         tarafındakiyle aynı dönem seçiciyi paylaşacak ve <b>gerçek blended ROAS</b>'ı
+         (Meta harcaması ÷ mağaza cirosu) hesaplayacak.</p>
+      <dl class="empty-steps">
+        <div><dt>1</dt><dd>Her mağazanın Shopify admin panelinden bir custom app kurulup Admin API erişim anahtarı üretilir</dd></div>
+        <div><dt>2</dt><dd>Anahtarlar sync.py'ye eklenir, günlük senkron Shopify siparişlerini de çeker</dd></div>
+        <div><dt>3</dt><dd>Bu panel otomatik olarak dolar — ekstra kurulum gerekmez</dd></div>
+      </dl>
+    </section>
+  </div>
 </div>
 
 <script>
@@ -581,4 +628,20 @@ document.getElementById("seg").addEventListener("click", e => {
   render();
 });
 render();
+
+/* ---- CPAS / D2C üst sekmesi ---- */
+document.getElementById("channel-seg").addEventListener("click", e => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  const isD2C = btn.dataset.c === "d2c";
+  document.querySelectorAll("#channel-seg button").forEach(b =>
+    b.setAttribute("aria-pressed", String(b === btn)));
+  document.getElementById("view-cpas").hidden = isD2C;
+  document.getElementById("view-d2c").hidden = !isD2C;
+  document.getElementById("seg").style.display = isD2C ? "none" : "flex";
+  document.getElementById("range").style.display = isD2C ? "none" : "";
+  document.getElementById("eyebrow").textContent = isD2C
+    ? "Aqua di Polo, Frime, Pierre Cardin · doğrudan mağaza satışları"
+    : "Trendyol & Hepsiburada · CPAS ortak reklamlar";
+});
 </script>
