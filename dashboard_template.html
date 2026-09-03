@@ -719,8 +719,9 @@ document.getElementById("channel-seg").addEventListener("click", e => {
     b.setAttribute("aria-pressed", String(b === btn)));
   document.getElementById("view-cpas").hidden = isD2C;
   document.getElementById("view-d2c").hidden = !isD2C;
-  document.getElementById("seg").style.display = isD2C ? "none" : "flex";
-  document.getElementById("range").style.display = isD2C ? "none" : "";
+  // Dönem seçici her iki sekmede de kullanılıyor — D2C de CPAS ile aynı
+  // dört dönemi (Dün/Son 7 Gün/Bu Ay/Geçen Ay) paylaşıyor, o yüzden
+  // burada gizlenmiyor.
   document.getElementById("eyebrow").textContent = isD2C
     ? "Aqua di Polo & Frime · kendi web sitesi, Shopify cirosu"
     : "Trendyol & Hepsiburada · CPAS ortak reklamlar";
