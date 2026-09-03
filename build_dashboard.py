@@ -33,6 +33,12 @@ COL = {
     "clicks": 10, "updated": 11,
 }
 
+# sync.py'deki D2C_SHEET_HEADER ile aynı olmalı
+D2C_COL = {
+    "period": 0, "order": 1, "brand": 2, "reach": 3, "impressions": 4,
+    "clicks": 5, "spend": 6, "revenue": 7, "orders": 8, "updated": 9,
+}
+
 AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
          "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
 
@@ -81,11 +87,32 @@ def read_sheet():
     spreadsheet = client.open_by_key(os.environ["GOOGLE_SHEET_ID"])
 
     rows, updated, labels = [], None, {}
+    d2c_rows = []
 
     for worksheet in spreadsheet.worksheets():
         values = worksheet.get_all_values()
         if len(values) < 2 or values[0][COL["period"]] != "Dönem":
             continue  # veri sekmesi değil
+
+        if worksheet.title == "D2C":
+            for row in values[1:]:
+                if not row or not row[D2C_COL["period"]].strip():
+                    continue
+                order = num(row[D2C_COL["order"]])
+                if order is None:
+                    continue
+                d2c_rows.append([
+                    row[D2C_COL["brand"]].strip(),
+                    int(order),
+                    int(num(row[D2C_COL["reach"]]) or 0),
+                    int(num(row[D2C_COL["impressions"]]) or 0),
+                    int(num(row[D2C_COL["clicks"]]) or 0),
+                    num(row[D2C_COL["spend"]]) or 0,
+                    num(row[D2C_COL["revenue"]]) or 0,
+                    int(num(row[D2C_COL["orders"]]) or 0),
+                ])
+            continue  # CPAS satırı gibi işlenmesin
+
         brand = worksheet.title
 
         for row in values[1:]:
@@ -113,11 +140,12 @@ def read_sheet():
         sys.exit("Sheet'te veri satırı bulunamadı — sync.py çalıştı mı?")
 
     rows.sort(key=lambda r: (r[0], r[1], r[2]))
-    return rows, updated or "", labels
+    d2c_rows.sort(key=lambda r: (r[0], r[1]))
+    return rows, d2c_rows, updated or "", labels
 
 
 def main():
-    rows, updated, labels = read_sheet()
+    rows, d2c_rows, updated, labels = read_sheet()
 
     # Veri dünle biter; "dün"ü senkron damgasından türetiyoruz.
     m = re.match(r"(\d{4})-(\d{2})-(\d{2})", updated)
@@ -132,7 +160,8 @@ def main():
     data_block = (
         f"const UPDATED = {json.dumps(updated)};\n"
         f"const PERIODS = {json.dumps(periods, ensure_ascii=False)};\n"
-        f"const D = {json.dumps(rows, ensure_ascii=False)};"
+        f"const D = {json.dumps(rows, ensure_ascii=False)};\n"
+        f"const D2C = {json.dumps(d2c_rows, ensure_ascii=False)};"
     )
 
     with open(TEMPLATE, encoding="utf-8") as fh:

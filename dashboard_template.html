@@ -85,22 +85,9 @@ body{
 }
 :root[data-theme="dark"] #channel-seg button[aria-pressed="true"]{color:var(--ground)}
 
-/* ---- D2C boş durum ---- */
-.empty-state{padding:40px 32px 44px;display:flex;flex-direction:column;align-items:center;
-  text-align:center;gap:14px}
-.empty-mark{width:52px;height:52px;opacity:.8}
-.empty-mark svg{width:100%;height:100%}
-.empty-state h2{margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:18px;letter-spacing:-.015em}
-.empty-state > p{margin:0;max-width:56ch;font-size:13.5px;color:var(--muted);line-height:1.6}
-.empty-steps{display:flex;flex-direction:column;gap:10px;margin:8px 0 0;max-width:52ch;width:100%;text-align:left}
-.empty-steps > div{display:flex;gap:12px;align-items:flex-start}
-.empty-steps dt{flex:none;width:22px;height:22px;border-radius:50%;background:var(--surface-2);
-  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
-  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;color:var(--ink-2)}
-.empty-steps dd{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.55;padding-top:2px}
-
 /* ---- marka kartları ---- */
 .brands{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.d2c-brands{grid-template-columns:repeat(2,1fr)}
 .bcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;
   box-shadow:var(--shadow);padding:16px 20px 18px;display:flex;flex-direction:column;gap:12px;
   border-top:3px solid var(--bc)}
@@ -280,23 +267,41 @@ td .c{color:var(--muted);font-size:12px}
   </div>
 
   <div id="view-d2c" hidden>
-    <section class="panel empty-state">
-      <div class="empty-mark" aria-hidden="true">
-        <svg viewBox="0 0 48 48"><path d="M8 14h32l-2.5 20a4 4 0 0 1-4 3.5H14.5a4 4 0 0 1-4-3.5L8 14Z"
-          fill="none" stroke="var(--muted)" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M16 14v-3a8 8 0 0 1 16 0v3" fill="none" stroke="var(--muted)" stroke-width="2"/></svg>
+
+  <section class="brands d2c-brands" id="d2c-brands" aria-label="D2C marka özeti"></section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Harcama karşılığı Shopify cirosu</h2>
+      <div class="legend">
+        <span><i style="background:var(--neutral-bar)"></i>harcama</span>
+        <span><i style="background:var(--accent)"></i>Shopify cirosu</span>
       </div>
-      <h2>D2C mağaza verisi henüz bağlı değil</h2>
-      <p>Bu bölüm, üç markanın kendi Shopify sitelerindeki <b>gerçek toplam ciro</b> ve sipariş
-         sayısını gösterecek — pazaryeri payı değil, mağazanın tamamı. Bağlandığında CPAS
-         tarafındakiyle aynı dönem seçiciyi paylaşacak ve <b>gerçek blended ROAS</b>'ı
-         (Meta harcaması ÷ mağaza cirosu) hesaplayacak.</p>
-      <dl class="empty-steps">
-        <div><dt>1</dt><dd>Her mağazanın Shopify admin panelinden bir custom app kurulup Admin API erişim anahtarı üretilir</dd></div>
-        <div><dt>2</dt><dd>Anahtarlar sync.py'ye eklenir, günlük senkron Shopify siparişlerini de çeker</dd></div>
-        <div><dt>3</dt><dd>Bu panel otomatik olarak dolar — ekstra kurulum gerekmez</dd></div>
-      </dl>
-    </section>
+    </div>
+    <div class="chart-scroll"><svg id="d2c-spend-chart" role="img" aria-label="D2C harcama ve ciro grafiği"></svg></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Tüm rakamlar</h2></div>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr>
+          <th>Marka</th><th>Reach</th><th>Impressions</th><th>Clicks</th>
+          <th>Harcama</th><th>Shopify Ciro</th><th>Shopify Sipariş</th>
+        </tr></thead>
+        <tbody id="d2c-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="notes">
+    <p>Harcama ve reach/impressions/clicks markanın <b>kendi web sitesine</b> giden Meta hesabından —
+       CPAS'taki pazaryeri ortak reklamlarıyla ilgisi yok. Ciro ve sipariş Shopify'ın kendi
+       <b>orders.json</b> uç noktasından, iptal edilen siparişler hariç. Shopify oturum (session)
+       verisi bu raporda yok — Shopify'ın <b>read_reports</b> izni ve ayrıca resmi "korumalı veri"
+       onayı gerektiriyor, henüz talep edilmedi.</p>
+  </footer>
+
   </div>
 </div>
 
@@ -326,6 +331,11 @@ const esc     = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
 
 const band = r => r < 1 ? "crit" : r < 2 ? "warn" : "pos";
 const ROAS_MAX = 5;
+
+const d2cRecs = D2C.map(r => ({
+  brand:r[0], period:r[1], reach:r[2], impressions:r[3],
+  clicks:r[4], spend:r[5], revenue:r[6], orders:r[7]
+}));
 
 let current = 2;
 
@@ -394,6 +404,68 @@ function paint(id, built){
   const el = document.getElementById(id);
   el.setAttribute("viewBox", `0 0 ${VB} ${built.H}`);
   el.innerHTML = built.svg;
+}
+
+/* ---- D2C: harcama vs Shopify cirosu, marka satırları ---- */
+function d2cSpendChart(rows){
+  const px0 = GUT, pw = PX1 - px0 - 78;
+  const max = Math.max(...rows.map(r => Math.max(r.spend, r.revenue))) || 1;
+  const H = 42 + rows.length * ROW + 6;
+  const w = v => Math.max(v / max * pw, v > 0 ? 2 : 0);
+  let s = "";
+
+  const step = max / 4;
+  for (let t = 0; t <= 4; t++){
+    const tx = px0 + t / 4 * pw;
+    s += `<line x1="${tx}" y1="34" x2="${tx}" y2="${H - 6}" stroke="var(--line-soft)" stroke-width="1"></line>`;
+    s += `<text class="n" x="${tx}" y="26" text-anchor="middle" font-size="11" fill="var(--muted)">${moneyK(step * t)}</text>`;
+  }
+
+  rows.forEach((r, i) => {
+    const y = 42 + i * ROW;
+    s += `<text class="brand" x="${px0 - 14}" y="${y + 18}" text-anchor="end" font-size="14.5" fill="var(--ink)">${esc(r.brand)}</text>`;
+    s += `<rect x="${px0}" y="${y + 1}" width="${w(r.spend)}" height="12" rx="2.5" fill="var(--neutral-bar)"></rect>`;
+    s += `<text class="n" x="${px0 + w(r.spend) + 7}" y="${y + 11}" font-size="10.5" fill="var(--muted)">${moneyK(r.spend)}</text>`;
+    s += `<rect x="${px0}" y="${y + 17}" width="${w(r.revenue)}" height="12" rx="2.5" fill="var(--accent)"></rect>`;
+    s += `<text class="n" x="${px0 + w(r.revenue) + 7}" y="${y + 27}" font-size="10.5" fill="var(--ink-2)">${moneyK(r.revenue)}</text>`;
+  });
+  return {svg:s, H};
+}
+
+function d2cRender(){
+  const rows = d2cRecs.filter(r => r.period === current);
+
+  document.getElementById("d2c-brands").innerHTML = rows.map(r => `
+    <article class="bcard" style="--bc:var(--accent)">
+      <span class="bname">${esc(r.brand)}</span>
+      <div class="gauge-row">
+        <div class="gauge-txt">
+          <span class="broas">${money(r.revenue)}</span>
+          <span class="blabel">Shopify cirosu · ${n(r.orders)} sipariş</span>
+        </div>
+      </div>
+      <dl class="bstats">
+        <div><dt>Harcama</dt><dd>${money(r.spend)}</dd></div>
+        <div><dt>Reach</dt><dd>${n(r.reach)}</dd></div>
+        <div><dt>Impressions</dt><dd>${n(r.impressions)}</dd></div>
+        <div><dt>Clicks</dt><dd>${n(r.clicks)}</dd></div>
+        <div><dt>Sipariş</dt><dd>${n(r.orders)}</dd></div>
+        <div><dt>Ort. Sepet</dt><dd>${r.orders ? money(r.revenue / r.orders) : "—"}</dd></div>
+      </dl>
+    </article>`).join("");
+
+  paint("d2c-spend-chart", d2cSpendChart(rows));
+
+  document.getElementById("d2c-tbody").innerHTML = rows.map(r => `
+    <tr>
+      <td><span class="b">${esc(r.brand)}</span></td>
+      <td>${n(r.reach)}</td>
+      <td>${n(r.impressions)}</td>
+      <td>${n(r.clicks)}</td>
+      <td>${money(r.spend)}</td>
+      <td>${money(r.revenue)}</td>
+      <td>${n(r.orders)}</td>
+    </tr>`).join("");
 }
 
 /* ---- kanal karşılaştırması: ortadan ayrılan çift yönlü çubuklar ---- */
@@ -616,6 +688,8 @@ function render(){
 
   document.querySelectorAll("#seg button").forEach(btn =>
     btn.setAttribute("aria-pressed", String(Number(btn.dataset.p) === current)));
+
+  d2cRender();
 }
 
 document.getElementById("stamp").textContent = UPDATED;
@@ -641,7 +715,7 @@ document.getElementById("channel-seg").addEventListener("click", e => {
   document.getElementById("seg").style.display = isD2C ? "none" : "flex";
   document.getElementById("range").style.display = isD2C ? "none" : "";
   document.getElementById("eyebrow").textContent = isD2C
-    ? "Aqua di Polo, Frime, Pierre Cardin · doğrudan mağaza satışları"
+    ? "Aqua di Polo & Frime · kendi web sitesi, Shopify cirosu"
     : "Trendyol & Hepsiburada · CPAS ortak reklamlar";
 });
 </script>
