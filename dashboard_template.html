@@ -287,7 +287,7 @@ td .c{color:var(--muted);font-size:12px}
       <table>
         <thead><tr>
           <th>Marka</th><th>Reach</th><th>Impressions</th><th>Clicks</th>
-          <th>Harcama</th><th>Shopify Ciro</th><th>Shopify Sipariş</th>
+          <th>Harcama</th><th>Shopify Ciro</th><th>Shopify Sipariş</th><th>ROAS</th>
         </tr></thead>
         <tbody id="d2c-tbody"></tbody>
       </table>
@@ -297,9 +297,10 @@ td .c{color:var(--muted);font-size:12px}
   <footer class="notes">
     <p>Harcama ve reach/impressions/clicks markanın <b>kendi web sitesine</b> giden Meta hesabından —
        CPAS'taki pazaryeri ortak reklamlarıyla ilgisi yok. Ciro ve sipariş Shopify'ın kendi
-       <b>orders.json</b> uç noktasından, iptal edilen siparişler hariç. Shopify oturum (session)
-       verisi bu raporda yok — Shopify'ın <b>read_reports</b> izni ve ayrıca resmi "korumalı veri"
-       onayı gerektiriyor, henüz talep edilmedi.</p>
+       <b>orders.json</b> uç noktasından, iptal edilen siparişler hariç. <b>ROAS = Meta harcaması ÷
+       Shopify cirosu</b> — Meta'nın kendi attribution'ı değil, çünkü Frime'ın pikseli satın alma
+       döndürmüyor. Shopify oturum (session) verisi bu raporda yok — Shopify'ın <b>read_reports</b>
+       izni ve ayrıca resmi "korumalı veri" onayı gerektiriyor, henüz talep edilmedi.</p>
   </footer>
 
   </div>
@@ -334,7 +335,11 @@ const ROAS_MAX = 5;
 
 const d2cRecs = D2C.map(r => ({
   brand:r[0], period:r[1], reach:r[2], impressions:r[3],
-  clicks:r[4], spend:r[5], revenue:r[6], orders:r[7]
+  clicks:r[4], spend:r[5], revenue:r[6], orders:r[7],
+  // CPAS'taki gibi Meta'nın kendi attribution'ı değil: Meta harcaması ÷
+  // Shopify'ın gerçek cirosu. Frime'ın pikseli satın alma döndürmediği için
+  // bu, elde tek güvenilir ROAS kaynağı.
+  roas: r[5] ? r[6] / r[5] : 0
 }));
 
 let current = 2;
@@ -435,13 +440,14 @@ function d2cSpendChart(rows){
 function d2cRender(){
   const rows = d2cRecs.filter(r => r.period === current);
 
-  document.getElementById("d2c-brands").innerHTML = rows.map(r => `
-    <article class="bcard" style="--bc:var(--accent)">
+  document.getElementById("d2c-brands").innerHTML = rows.map(r => { const b = band(r.roas); return `
+    <article class="bcard" style="--bc:var(--${b})">
       <span class="bname">${esc(r.brand)}</span>
       <div class="gauge-row">
+        <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas)}</svg>
         <div class="gauge-txt">
-          <span class="broas">${money(r.revenue)}</span>
-          <span class="blabel">Shopify cirosu · ${n(r.orders)} sipariş</span>
+          <span class="broas">${roasFmt(r.roas)}</span>
+          <span class="blabel">₺1 harcamaya ₺${tl2.format(r.roas)} Shopify cirosu<br>${money(r.revenue)} · ${n(r.orders)} sipariş</span>
         </div>
       </div>
       <dl class="bstats">
@@ -452,11 +458,11 @@ function d2cRender(){
         <div><dt>Sipariş</dt><dd>${n(r.orders)}</dd></div>
         <div><dt>Ort. Sepet</dt><dd>${r.orders ? money(r.revenue / r.orders) : "—"}</dd></div>
       </dl>
-    </article>`).join("");
+    </article>`; }).join("");
 
   paint("d2c-spend-chart", d2cSpendChart(rows));
 
-  document.getElementById("d2c-tbody").innerHTML = rows.map(r => `
+  document.getElementById("d2c-tbody").innerHTML = rows.map(r => { const b = band(r.roas); return `
     <tr>
       <td><span class="b">${esc(r.brand)}</span></td>
       <td>${n(r.reach)}</td>
@@ -465,7 +471,8 @@ function d2cRender(){
       <td>${money(r.spend)}</td>
       <td>${money(r.revenue)}</td>
       <td>${n(r.orders)}</td>
-    </tr>`).join("");
+      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${roasFmt(r.roas)}</span></td>
+    </tr>`; }).join("");
 }
 
 /* ---- kanal karşılaştırması: ortadan ayrılan çift yönlü çubuklar ---- */
