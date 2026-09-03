@@ -26,9 +26,14 @@ jobs:
 
       - name: Run sync
         env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           META_ACCESS_TOKEN_AQUA_DI_POLO: ${{ secrets.META_ACCESS_TOKEN_AQUA_DI_POLO }}
           META_ACCESS_TOKEN_FRIME: ${{ secrets.META_ACCESS_TOKEN_FRIME }}
           META_ACCESS_TOKEN_PIERRE_CARDIN: ${{ secrets.META_ACCESS_TOKEN_PIERRE_CARDIN }}
+          SHOPIFY_ACCESS_TOKEN_FRIME: ${{ secrets.SHOPIFY_ACCESS_TOKEN_FRIME }}
+          SHOPIFY_SHOP_FRIME: ${{ secrets.SHOPIFY_SHOP_FRIME }}
+          SHOPIFY_ACCESS_TOKEN_AQUA_DI_POLO: ${{ secrets.SHOPIFY_ACCESS_TOKEN_AQUA_DI_POLO }}
+          SHOPIFY_SHOP_AQUA_DI_POLO: ${{ secrets.SHOPIFY_SHOP_AQUA_DI_POLO }}
           GOOGLE_SERVICE_ACCOUNT_FILE: ./service-account.json
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: python sync.py
