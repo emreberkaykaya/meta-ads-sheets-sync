@@ -19,6 +19,8 @@
   --warn:#a76a15;
   --crit:#b23b3b;
   --track:#dde5e5;
+  --ch-a:#0f5d68;
+  --ch-b:#7a5aa8;
   --shadow:0 1px 2px rgba(16,24,26,.05), 0 8px 24px -16px rgba(16,24,26,.35);
   --on-accent:#ffffff;
 }
@@ -30,6 +32,7 @@
     --accent:#5cb6c2; --accent-soft:#17383d; --neutral-bar:#4a5a5c;
     --pos:#4fc294; --warn:#dda34a; --crit:#e57373;
     --track:#232e30;
+    --ch-a:#5cb6c2; --ch-b:#a894dd;
     --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
     --on-accent:#08181b;
   }
@@ -41,6 +44,7 @@
   --accent:#5cb6c2; --accent-soft:#17383d; --neutral-bar:#4a5a5c;
   --pos:#4fc294; --warn:#dda34a; --crit:#e57373;
   --track:#232e30;
+  --ch-a:#5cb6c2; --ch-b:#a894dd;
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
   --on-accent:#08181b;
 }
@@ -112,6 +116,8 @@ body{
 .chart-scroll svg .brand{font-family:Archivo,sans-serif;font-weight:600}
 .chart-scroll svg .big{font-family:Archivo,sans-serif;font-weight:700}
 .bar-anim{transition:width .35s cubic-bezier(.4,0,.2,1)}
+.vs{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);padding:0 3px}
 
 /* ---- funnels ---- */
 .funnels{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-soft)}
@@ -206,6 +212,26 @@ td .c{color:var(--muted);font-size:12px}
   </section>
 
   <section class="panel">
+    <div class="panel-head">
+      <h2>Trendyol <span class="vs">vs</span> Hepsiburada</h2>
+      <div class="legend">
+        <span><i style="background:var(--ch-a)"></i>Trendyol</span>
+        <span><i style="background:var(--ch-b)"></i>Hepsiburada</span>
+        <span>3 markanın toplamı</span>
+      </div>
+    </div>
+    <div class="chart-scroll"><svg id="vs-chart" role="img" aria-label="Kanal karşılaştırması"></svg></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Dönemler arası ROAS</h2>
+      <span class="legend"><span>seçili dönem vurgulu · yatay çizgi başabaş</span></span>
+    </div>
+    <div class="chart-scroll"><svg id="period-chart" role="img" aria-label="Marka ve döneme göre ROAS"></svg></div>
+  </section>
+
+  <section class="panel">
     <div class="panel-head"><h2>Tüm rakamlar</h2></div>
     <div class="tbl-scroll">
       <table>
@@ -220,18 +246,27 @@ td .c{color:var(--muted);font-size:12px}
 
   <footer class="notes">
     <p>Meta <b>catalog_segment</b> alanları — yalnızca pazaryeriyle paylaşılan katalog kalemleri.
-       <b>Bu Ay</b> ayın geçen kısmıdır, tam ay değildir. <b>“veri yok”</b> sıfır satış demek değil,
-       Meta o dönem için değer döndürmedi demektir. Huni gövdesi şekil olarak orantılı değildir; oranlar sağda yazar.</p>
+       <b>Bu Ay</b> ayın geçen kısmıdır, tam ay değildir. Meta sıfır değerli metrikleri yanıtta hiç
+       döndürmediği için <b>boş gelen satın alma ve ciro sıfır sayılmıştır</b>. ROAS her seviyede
+       önce toplanıp sonra bölünür: <b>toplam ciro ÷ toplam harcama</b>, kanal ROAS'larının ortalaması değil.
+       Huni gövdesi şekil olarak orantılı değildir; oranlar sağda yazar.</p>
   </footer>
 </div>
 
 <script>
 /*__DATA__*/
 
+// Meta, değeri sıfır olan metrikleri yanıtta hiç döndürmez — bu yüzden boş hücre
+// "ölçülemedi" değil "o dönem satış olmadı" demektir ve sıfır sayılır. Hücrenin
+// gerçekten boş geldiğini `reported` ile saklıyoruz, dipnotta açıklanıyor.
 const recs = D.map(r => ({
   brand:r[0], channel:r[1], period:r[2],
-  spend:r[3], views:r[4], atc:r[5], purchases:r[6], value:r[7], clicks:r[8],
-  roas:(r[7] === null || !r[3]) ? null : r[7]/r[3]
+  spend:r[3], views:r[4], atc:r[5],
+  purchases:r[6] === null ? 0 : r[6],
+  value:r[7] === null ? 0 : r[7],
+  clicks:r[8],
+  reported:r[7] !== null,
+  roas:r[3] ? (r[7] === null ? 0 : r[7]) / r[3] : 0
 }));
 
 const tl  = new Intl.NumberFormat("tr-TR",{maximumFractionDigits:0});
@@ -242,7 +277,7 @@ const n       = v => tl.format(v);
 const roasFmt = v => tl2.format(v) + "×";
 const esc     = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
 
-const band = r => r === null ? "muted" : r < 1 ? "crit" : r < 2 ? "warn" : "pos";
+const band = r => r < 1 ? "crit" : r < 2 ? "warn" : "pos";
 const ROAS_MAX = 5;
 
 let current = 2;
@@ -270,17 +305,13 @@ function roasChart(rows){
     const prev = recs.find(z => z.brand === r.brand && z.channel === r.channel && z.period === 4);
     s += `<text class="brand" x="${px0 - 14}" y="${y + 11}" text-anchor="end" font-size="14.5" fill="var(--ink)">${esc(r.brand)}</text>`;
     s += `<text x="${px0 - 14}" y="${y + 26}" text-anchor="end" font-size="11.5" fill="var(--muted)">${esc(r.channel)}</text>`;
-    if (r.roas === null){
-      s += `<rect x="${px0}" y="${y}" width="${pw}" height="${bh}" rx="4" fill="var(--track)" opacity=".5"></rect>`;
-      s += `<text x="${px0 + 12}" y="${y + 16.5}" font-size="12" fill="var(--muted)">Meta bu dönem için ciro döndürmedi</text>`;
-    } else {
-      s += `<rect x="${px0}" y="${y}" width="${pw}" height="${bh}" rx="4" fill="var(--track)" opacity=".55"></rect>`;
+    s += `<rect x="${px0}" y="${y}" width="${pw}" height="${bh}" rx="4" fill="var(--track)" opacity=".55"></rect>`;
+    if (r.roas > 0)
       s += `<rect x="${px0}" y="${y}" width="${x(r.roas) - px0}" height="${bh}" rx="4" fill="var(--${b})"></rect>`;
-      s += `<text class="big" x="${PX1 + 14}" y="${y + 17.5}" font-size="17" fill="var(--${b})">${roasFmt(r.roas)}</text>`;
-      if (prev && prev.roas !== null && current !== 4){
-        const pxp = x(prev.roas);
-        s += `<rect x="${pxp - 1.5}" y="${y - 4}" width="3" height="${bh + 8}" rx="1.5" fill="var(--muted)"></rect>`;
-      }
+    s += `<text class="big" x="${PX1 + 14}" y="${y + 17.5}" font-size="17" fill="var(--${b})">${roasFmt(r.roas)}</text>`;
+    if (prev && current !== 4){
+      const pxp = x(prev.roas);
+      s += `<rect x="${pxp - 1.5}" y="${y - 4}" width="3" height="${bh + 8}" rx="1.5" fill="var(--muted)"></rect>`;
     }
   });
   return {svg:s, H};
@@ -306,12 +337,8 @@ function spendChart(rows){
     s += `<text x="${px0 - 14}" y="${y + 26}" text-anchor="end" font-size="11.5" fill="var(--muted)">${esc(r.channel)}</text>`;
     s += `<rect x="${px0}" y="${y + 1}" width="${w(r.spend)}" height="12" rx="2.5" fill="var(--neutral-bar)"></rect>`;
     s += `<text class="n" x="${px0 + w(r.spend) + 7}" y="${y + 11}" font-size="10.5" fill="var(--muted)">${moneyK(r.spend)}</text>`;
-    if (r.value === null){
-      s += `<text x="${px0 + 2}" y="${y + 28}" font-size="10.5" fill="var(--muted)">veri yok</text>`;
-    } else {
-      s += `<rect x="${px0}" y="${y + 17}" width="${w(r.value)}" height="12" rx="2.5" fill="var(--accent)"></rect>`;
-      s += `<text class="n" x="${px0 + w(r.value) + 7}" y="${y + 27}" font-size="10.5" fill="var(--ink-2)">${moneyK(r.value)}</text>`;
-    }
+    s += `<rect x="${px0}" y="${y + 17}" width="${w(r.value)}" height="12" rx="2.5" fill="var(--accent)"></rect>`;
+    s += `<text class="n" x="${px0 + w(r.value) + 7}" y="${y + 27}" font-size="10.5" fill="var(--ink-2)">${moneyK(r.value)}</text>`;
   });
   return {svg:s, H};
 }
@@ -320,6 +347,102 @@ function paint(id, built){
   const el = document.getElementById(id);
   el.setAttribute("viewBox", `0 0 ${VB} ${built.H}`);
   el.innerHTML = built.svg;
+}
+
+/* ---- kanal karşılaştırması: ortadan ayrılan çift yönlü çubuklar ---- */
+function vsChart(rows){
+  // BAR, en uzun çubuğun ucundaki tutar etiketi viewBox dışına taşmayacak
+  // şekilde sınırlı: 500 - 78 - 300 = 122 birim etiket payı kalıyor.
+  const CX = 500, GAP = 78, BAR = 300, RH = 56;
+  const L = CX - GAP, R = CX + GAP;              // çubukların iç uçları
+  const channels = ["Trendyol", "Hepsiburada"];
+
+  const agg = channels.map(ch => {
+    const cr = rows.filter(r => r.channel === ch);
+    const spend = cr.reduce((s, r) => s + r.spend, 0);
+    const rev   = cr.reduce((s, r) => s + r.value, 0);
+    return {
+      ch, spend, rev,
+      roas: spend ? rev / spend : 0,
+      pur: cr.reduce((s, r) => s + r.purchases, 0),
+      atc: cr.reduce((s, r) => s + r.atc, 0)
+    };
+  });
+  const [a, b] = agg;
+
+  const metrics = [
+    {k:"Harcama", a:a.spend, b:b.spend, f:money},
+    {k:"Ciro",    a:a.rev,   b:b.rev,   f:money},
+    {k:"ROAS",    a:a.roas,  b:b.roas,  f:roasFmt, roas:true},
+    {k:"Satış",   a:a.pur,   b:b.pur,   f:n},
+    {k:"Sepete ekleme", a:a.atc, b:b.atc, f:n}
+  ];
+
+  const H = 46 + metrics.length * RH + 6;
+  let s = "";
+
+  // başlıklar
+  s += `<text class="brand" x="${L}" y="22" text-anchor="end" font-size="15" fill="var(--ch-a)">Trendyol</text>`;
+  s += `<text class="brand" x="${R}" y="22" text-anchor="start" font-size="15" fill="var(--ch-b)">Hepsiburada</text>`;
+  s += `<line x1="${CX}" y1="30" x2="${CX}" y2="${H - 6}" stroke="var(--line)" stroke-width="1"></line>`;
+
+  metrics.forEach((m, i) => {
+    const y = 46 + i * RH, bh = 26, max = Math.max(m.a, m.b) || 1;
+    const wa = m.a / max * BAR, wb = m.b / max * BAR;
+    const ca = m.roas ? `var(--${band(m.a)})` : "var(--ch-a)";
+    const cb = m.roas ? `var(--${band(m.b)})` : "var(--ch-b)";
+
+    s += `<text x="${CX}" y="${y - 4}" text-anchor="middle" font-size="10.5"
+          fill="var(--muted)" letter-spacing=".07em">${m.k.toUpperCase()}</text>`;
+    s += `<rect x="${L - wa}" y="${y}" width="${wa}" height="${bh}" rx="4" fill="${ca}"></rect>`;
+    s += `<rect x="${R}" y="${y}" width="${wb}" height="${bh}" rx="4" fill="${cb}"></rect>`;
+    s += `<text class="n" x="${L - wa - 9}" y="${y + 18}" text-anchor="end" font-size="13"
+          font-weight="500" fill="var(--ink)">${m.f(m.a)}</text>`;
+    s += `<text class="n" x="${R + wb + 9}" y="${y + 18}" text-anchor="start" font-size="13"
+          font-weight="500" fill="var(--ink)">${m.f(m.b)}</text>`;
+  });
+  return {svg:s, H};
+}
+
+/* ---- dönemler arası ROAS: marka başına gruplanmış sütunlar ---- */
+function periodChart(){
+  const X0 = 56, X1 = 968, Y0 = 26, Y1 = 214, MAXR = 5;
+  const H = Y1 + 58;  // dönem etiketi (+16) ve marka adı (+46) için taban payı
+  const brands = [...new Set(recs.map(r => r.brand))];
+  const y = v => Y1 - Math.min(v, MAXR) / MAXR * (Y1 - Y0);
+  let s = "";
+
+  for (let t = 0; t <= MAXR; t++){
+    const be = t === 1, gy = y(t);
+    s += `<line x1="${X0}" y1="${gy}" x2="${X1}" y2="${gy}"
+          stroke="var(--${be ? "ink-2" : "line-soft"})" stroke-width="${be ? 1.4 : 1}" ${be ? 'opacity=".5"' : ""}></line>`;
+    s += `<text class="n" x="${X0 - 10}" y="${gy + 4}" text-anchor="end" font-size="10.5" fill="var(--muted)">${t}×</text>`;
+  }
+
+  const gw = (X1 - X0) / brands.length;
+  brands.forEach((brand, gi) => {
+    const gx = X0 + gi * gw;
+    if (gi) s += `<line x1="${gx}" y1="${Y0 - 6}" x2="${gx}" y2="${Y1 + 30}" stroke="var(--line-soft)" stroke-width="1"></line>`;
+    s += `<text class="brand" x="${gx + gw / 2}" y="${Y1 + 46}" text-anchor="middle" font-size="14" fill="var(--ink)">${esc(brand)}</text>`;
+
+    const inner = gw * 0.82, bw = inner / PERIODS.length * 0.72, step = inner / PERIODS.length;
+    PERIODS.forEach((p, pi) => {
+      const br = recs.filter(r => r.brand === brand && r.period === p.id);
+      const spend = br.reduce((t2, r) => t2 + r.spend, 0);
+      const rev   = br.reduce((t2, r) => t2 + r.value, 0);
+      const roas  = spend ? rev / spend : 0;
+      const bx = gx + gw * 0.09 + pi * step + (step - bw) / 2;
+      const by = y(roas), sel = p.id === current;
+      s += `<rect x="${bx}" y="${by}" width="${bw}" height="${Y1 - by}" rx="3"
+            fill="var(--${band(roas)})" opacity="${sel ? 1 : .4}"></rect>`;
+      s += `<text class="n" x="${bx + bw / 2}" y="${by - 6}" text-anchor="middle" font-size="11"
+            font-weight="${sel ? 600 : 400}" fill="var(--${sel ? "ink" : "muted"})">${tl2.format(roas)}</text>`;
+      s += `<text x="${bx + bw / 2}" y="${Y1 + 16}" text-anchor="middle" font-size="10"
+            fill="var(--${sel ? "ink-2" : "muted"})">${esc(p.label)}</text>`;
+    });
+  });
+  s += `<line x1="${X0}" y1="${Y1}" x2="${X1}" y2="${Y1}" stroke="var(--line)" stroke-width="1.5"></line>`;
+  return {svg:s, H};
 }
 
 /* ---- gauge: yarım daire, 0–5× ölçek, 1,0× başabaş çentiği ---- */
@@ -357,14 +480,14 @@ function funnel(r){
     if (!r.views || v <= 0) return 12;
     return 18 + 118 * Math.pow(v / r.views, 0.34);
   };
-  const w1 = 136, w2 = wid(r.atc), w3 = wid(r.purchases || 0);
+  const w1 = 136, w2 = wid(r.atc), w3 = wid(r.purchases);
   const cx = 68;
   const seg = (y, wt, wb, fill, op) =>
     `<path d="M${cx - wt / 2} ${y} L${cx + wt / 2} ${y} L${cx + wb / 2} ${y + bh} L${cx - wb / 2} ${y + bh} Z"
       fill="${fill}" opacity="${op}"></path>`;
 
   const atcRate = r.views ? r.atc / r.views * 100 : 0;
-  const buyRate = r.atc ? (r.purchases || 0) / r.atc * 100 : 0;
+  const buyRate = r.atc ? r.purchases / r.atc * 100 : 0;
 
   const label = (y, name, val, rate) => `
     <text x="${LX}" y="${y + 15}" font-size="11" fill="var(--muted)">${name}</text>
@@ -375,7 +498,7 @@ function funnel(r){
   <div class="fn">
     <div class="fn-head"><span class="b">${esc(r.brand)}</span><span class="chip">${esc(r.channel)}</span></div>
     <svg viewBox="0 0 ${W} ${H}" role="img"
-         aria-label="${esc(r.brand)} ${esc(r.channel)} hunisi: ${n(r.views)} görüntüleme, ${n(r.atc)} sepet, ${r.purchases === null ? "satın alma verisi yok" : n(r.purchases) + " satın alma"}">
+         aria-label="${esc(r.brand)} ${esc(r.channel)} hunisi: ${n(r.views)} görüntüleme, ${n(r.atc)} sepet, ${n(r.purchases)} satın alma">
       ${seg(top, w1, w2, "var(--accent)", ".30")}
       ${seg(top + bh, w2, w3, "var(--accent)", ".62")}
       ${seg(top + bh * 2, w3, w3, `var(--${band(r.roas)})`, ".95")}
@@ -383,8 +506,7 @@ function funnel(r){
       <line x1="${cx - w3 / 2}" y1="${top + bh * 2}" x2="${cx + w3 / 2}" y2="${top + bh * 2}" stroke="var(--surface)" stroke-width="1.5"></line>
       ${label(top, "Görüntüleme", n(r.views), "")}
       ${label(top + bh, "Sepete ekleme", n(r.atc), tl2.format(atcRate) + "%")}
-      ${label(top + bh * 2, "Satın alma", r.purchases === null ? "—" : n(r.purchases),
-              r.purchases === null ? "veri yok" : tl2.format(buyRate) + "%")}
+      ${label(top + bh * 2, "Satın alma", n(r.purchases), tl2.format(buyRate) + "%")}
     </svg>
   </div>`;
 }
@@ -399,16 +521,12 @@ function render(){
   const brands = [...new Set(recs.map(r => r.brand))];
   document.getElementById("brands").innerHTML = brands.map(brand => {
     const br = rows.filter(r => r.brand === brand);
-    // ROAS yalnızca cirosu ölçülebilen kanallardan hesaplanır — verisi olmayan bir
-    // kanalın harcamasını paya katmak markanın ROAS'ını olduğundan düşük gösterirdi.
-    const measured = br.filter(r => r.value !== null);
-    const mSpend = measured.reduce((s, r) => s + r.spend, 0);
-    const mRev   = measured.reduce((s, r) => s + r.value, 0);
-    const roas   = mSpend ? mRev / mSpend : null;
-    const pur    = measured.reduce((s, r) => s + (r.purchases || 0), 0);
-    // Kartın üç rakamı aynı kanal kümesinden gelir ki harcama ÷ ciro = gösterilen ROAS olsun.
-    // Hariç tutulan kanalın harcaması aşağıdaki tabloda görünür.
-    const excluded = br.filter(r => r.value === null).map(r => r.channel);
+    // Markanın ROAS'ı, kanal ROAS'larının ortalaması değil: önce iki kanalın cirosu
+    // ve harcaması ayrı ayrı toplanır, sonra bölünür.
+    const mSpend = br.reduce((s, r) => s + r.spend, 0);
+    const mRev   = br.reduce((s, r) => s + r.value, 0);
+    const roas   = mSpend ? mRev / mSpend : 0;
+    const pur    = br.reduce((s, r) => s + r.purchases, 0);
     const b = band(roas);
     return `
     <article class="bcard" style="--bc:var(--${b})">
@@ -416,16 +534,13 @@ function render(){
       <div class="gauge-row">
         <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(roas === null ? 0 : roas)}</svg>
         <div class="gauge-txt">
-          <span class="broas">${roas === null ? "—" : roasFmt(roas)}</span>
-          <span class="blabel">${
-            roas === null ? "Ciro verisi yok"
-            : `₺1 harcamaya ₺${tl2.format(roas)} ciro`
-          }${excluded.length ? `<br>${esc(excluded.join(", "))} hariç — ciro verisi yok` : ""}</span>
+          <span class="broas">${roasFmt(roas)}</span>
+          <span class="blabel">₺1 harcamaya ₺${tl2.format(roas)} ciro<br>${br.length} kanal toplamı</span>
         </div>
       </div>
       <dl class="bstats">
-        <div><dt>Harcama</dt><dd>${mSpend ? money(mSpend) : "—"}</dd></div>
-        <div><dt>Ciro</dt><dd>${mRev ? money(mRev) : "—"}</dd></div>
+        <div><dt>Harcama</dt><dd>${money(mSpend)}</dd></div>
+        <div><dt>Ciro</dt><dd>${money(mRev)}</dd></div>
         <div><dt>Satış</dt><dd>${n(pur)}</dd></div>
       </dl>
     </article>`;
@@ -433,6 +548,8 @@ function render(){
 
   paint("roas-chart", roasChart(rows));
   paint("spend-chart", spendChart(rows));
+  paint("vs-chart", vsChart(rows));
+  paint("period-chart", periodChart());
 
   document.getElementById("funnels").innerHTML = rows.map(r => funnel(r)).join("");
 
@@ -441,9 +558,9 @@ function render(){
     return `<tr>
       <td><span class="b">${esc(r.brand)}</span> <span class="c">${esc(r.channel)}</span></td>
       <td>${money(r.spend)}</td>
-      <td>${r.value === null ? "—" : money(r.value)}</td>
-      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${r.roas === null ? "veri yok" : roasFmt(r.roas)}</span></td>
-      <td>${r.purchases === null ? "—" : n(r.purchases)}</td>
+      <td>${money(r.value)}</td>
+      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${roasFmt(r.roas)}</span></td>
+      <td>${n(r.purchases)}</td>
       <td>${n(r.atc)}</td>
       <td>${n(r.views)}</td>
       <td>${n(r.clicks)}</td>
