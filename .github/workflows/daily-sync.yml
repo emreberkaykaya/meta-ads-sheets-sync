@@ -1,9 +1,11 @@
 name: Daily Meta Ads Sync
 
 on:
-  schedule:
-    # 06:00 UTC = 09:00 Europe/Istanbul
-    - cron: "0 6 * * *"
+  # GitHub'ın kendi schedule tetikleyicisi burada bilerek yok: yük durumuna göre
+  # saatlerce gecikebiliyor (gözlemlenen: 3-4 saat), bu da panelin bayat veriyle
+  # yayınlanmasına yol açtı. Senkron artık yalnızca Claude'un zamanlanmış görevi
+  # tarafından `gh workflow run` ile, günde 2 kez (09:30 ve 18:30 TR), tetiklenip
+  # bitmesi beklenerek tetiklenir — tek kontrol noktası, öngörülebilir zamanlama.
   workflow_dispatch: {}
 
 jobs:
