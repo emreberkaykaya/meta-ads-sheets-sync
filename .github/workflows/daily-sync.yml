@@ -1,16 +1,31 @@
 name: Daily Meta Ads Sync
 
 on:
-  # GitHub'ın kendi schedule tetikleyicisi burada bilerek yok: yük durumuna göre
-  # saatlerce gecikebiliyor (gözlemlenen: 3-4 saat), bu da panelin bayat veriyle
-  # yayınlanmasına yol açtı. Senkron artık yalnızca Claude'un zamanlanmış görevi
-  # tarafından `gh workflow run` ile, günde 2 kez (09:30 ve 18:30 TR), tetiklenip
-  # bitmesi beklenerek tetiklenir — tek kontrol noktası, öngörülebilir zamanlama.
+  # Günde 2 kez: 06:30 ve 15:30 UTC (09:30 ve 18:30 Europe/Istanbul).
+  # GitHub'ın schedule tetikleyicisi yük durumuna göre saatlerce gecikebiliyor
+  # (gözlemlenen: 3-4 saat) ama bu artık kabul edilebilir — tamamen bulutta
+  # çalıştığı için tek alternatifi (bir masaüstü uygulamasının açık kalmasına
+  # bağımlı zamanlanmış görev) çok daha kırılgandı: bilgisayar kapalıyken
+  # sessizce atlanıyordu.
+  schedule:
+    - cron: "30 6 * * *"
+    - cron: "30 15 * * *"
   workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    outputs:
+      dashboard-ready: ${{ steps.build.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -39,3 +54,28 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT_FILE: ./service-account.json
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: python sync.py
+
+      - name: Build dashboard
+        id: build
+        env:
+          GOOGLE_SERVICE_ACCOUNT_FILE: ./service-account.json
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        run: |
+          python build_dashboard.py
+          mkdir -p _site
+          cp dashboard.html _site/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: sync
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
