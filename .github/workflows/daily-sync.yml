@@ -1,15 +1,15 @@
 name: Daily Meta Ads Sync
 
 on:
-  # Günde 2 kez: 06:30 ve 15:30 UTC (09:30 ve 18:30 Europe/Istanbul).
-  # GitHub'ın schedule tetikleyicisi yük durumuna göre saatlerce gecikebiliyor
-  # (gözlemlenen: 3-4 saat) ama bu artık kabul edilebilir — tamamen bulutta
-  # çalıştığı için tek alternatifi (bir masaüstü uygulamasının açık kalmasına
-  # bağımlı zamanlanmış görev) çok daha kırılgandı: bilgisayar kapalıyken
-  # sessizce atlanıyordu.
+  # Her 2 saatte bir, günde 12 kez (00:15, 02:15, ... 22:15 UTC). Tamamen
+  # bulutta ve public repo'da GitHub Actions dakikaları sınırsız olduğu için
+  # bu sıklığın maliyeti yok; Meta/Shopify API'lerine de günde 12 istekten
+  # ibaret, limitlere yaklaşmıyor. GitHub'ın schedule tetikleyicisi yük
+  # durumuna göre gecikebiliyor (gözlemlenen: 3-4 saat) ama tek alternatifi
+  # (bir masaüstü uygulamasının açık kalmasına bağımlı zamanlanmış görev)
+  # çok daha kırılgandı: bilgisayar kapalıyken sessizce atlanıyordu.
   schedule:
-    - cron: "30 6 * * *"
-    - cron: "30 15 * * *"
+    - cron: "15 */2 * * *"
   workflow_dispatch: {}
 
 permissions:
