@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Performance Marketing Raporu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,7 +57,7 @@ body{
   font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:1160px;margin:0 auto;padding:22px 20px 64px;display:flex;flex-direction:column;gap:20px}
+.wrap{max-width:1060px;margin:0 auto;padding:22px 20px 72px;display:flex;flex-direction:column;gap:14px}
 .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;font-weight:500;
   letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
 .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
@@ -85,57 +87,86 @@ body{
 }
 :root[data-theme="dark"] #channel-seg button[aria-pressed="true"]{color:var(--ground)}
 
-/* ---- marka kartları ---- */
-.brands{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.d2c-brands{grid-template-columns:repeat(2,1fr)}
-.bcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;
-  box-shadow:var(--shadow);padding:16px 20px 18px;display:flex;flex-direction:column;gap:12px;
-  border-top:3px solid var(--bc)}
-.bname{font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.018em}
-.bhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.gauge-row{display:flex;align-items:center;gap:14px}
-.gauge{width:112px;height:66px;flex:none}
-.gauge-txt{display:flex;flex-direction:column;gap:3px;min-width:0}
-.broas{font-family:Archivo,sans-serif;font-weight:700;font-size:38px;line-height:1;
-  letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--bc)}
-.blabel{font-size:11.5px;color:var(--muted);line-height:1.4}
-.bstats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0;
-  padding-top:12px;border-top:1px solid var(--line-soft)}
-.bstats > div{display:flex;flex-direction:column;gap:2px;min-width:0}
-.bstats dt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;
+/* ---- bölüm başlıkları: sayfa yukarıdan aşağı okunuyor, her bölüm kendini tanıtır ---- */
+.sec{display:flex;flex-direction:column;gap:3px;margin-top:18px}
+.sec:first-child{margin-top:4px}
+.sec h2{margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:19px;letter-spacing:-.022em}
+.sec p{margin:0;font-size:12.5px;color:var(--muted);max-width:70ch}
+
+/* ---- özet şeridi ---- */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:0;
+  background:var(--line-soft);border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;box-shadow:var(--shadow)}
+.sum{background:var(--surface);padding:16px 20px 18px;display:flex;flex-direction:column;gap:5px}
+.sum dt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;
   letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.bstats dd{margin:0;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
-  font-size:14px;font-weight:500}
+.sum dd{margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:27px;line-height:1.05;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.sum dd small{display:block;margin-top:4px;font-family:"IBM Plex Sans",sans-serif;
+  font-size:11.5px;font-weight:400;letter-spacing:0;color:var(--muted)}
+
+/* ---- hesap blokları: her hesap tek başına, alt alta ---- */
+.accts{display:flex;flex-direction:column;gap:14px}
+.acct{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--bc);
+  border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.acct-head{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;padding:15px 22px 14px;border-bottom:1px solid var(--line-soft)}
+.acct-id{display:flex;align-items:center;gap:10px}
+.acct-name{font-family:Archivo,sans-serif;font-weight:700;font-size:19px;letter-spacing:-.02em}
+.acct-roas{display:flex;align-items:baseline;gap:9px}
+.acct-roas b{font-family:Archivo,sans-serif;font-weight:700;font-size:30px;line-height:1;
+  letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--bc)}
+.acct-roas span{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.chip{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;letter-spacing:.07em;
+  text-transform:uppercase;padding:3px 7px;border-radius:4px;background:var(--accent-soft);color:var(--accent)}
+.acct-body{padding:17px 22px 19px;display:flex;flex-direction:column;gap:18px}
+
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0}
+.kv > div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.kv dt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.kv dd{margin:0;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:17px;font-weight:500}
+.kv dd small{display:block;margin-top:2px;font-family:"IBM Plex Sans",sans-serif;
+  font-size:11px;font-weight:400;color:var(--muted)}
+
+/* harcama ve ciro yan yana: çubuklar hesabın kendi içinde ölçekli */
+.duo{display:flex;flex-direction:column;gap:8px}
+.duo-row{display:grid;grid-template-columns:66px 1fr auto;align-items:center;gap:12px}
+.duo-k{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.duo-track{height:14px;background:var(--track);border-radius:3px;overflow:hidden}
+.duo-fill{height:100%;border-radius:3px;transition:width .35s cubic-bezier(.4,0,.2,1)}
+.duo-v{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:13.5px;font-weight:500}
+
+/* huni artık şekil değil, soldan sağa okunan adımlar */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  margin:0;padding:0;list-style:none;background:var(--line-soft);
+  border:1px solid var(--line-soft);border-radius:8px;overflow:hidden}
+.step{background:var(--surface-2);padding:12px 15px 13px;display:flex;flex-direction:column;gap:2px}
+.step-k{font-size:11.5px;color:var(--muted)}
+.step-v{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:19px;font-weight:500;line-height:1.2}
+.step-r{font-size:11px;color:var(--ink-2)}
+.step-r b{font-family:"IBM Plex Mono",monospace;font-weight:600}
 
 /* ---- panels & charts ---- */
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;
   box-shadow:var(--shadow);overflow:hidden}
 .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;
   padding:15px 22px 13px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
-.panel-head h2{margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15px;letter-spacing:-.012em}
+.panel-head h3{margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:15px;letter-spacing:-.012em}
 .legend{display:flex;gap:15px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);align-items:center}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-.legend i.tick{width:3px;height:13px;border-radius:0;vertical-align:-2px}
 .chart-scroll{overflow-x:auto;padding:16px 22px 18px}
-.chart-scroll svg{display:block;width:100%;min-width:640px;height:auto}
+.chart-scroll svg{display:block;width:100%;min-width:600px;height:auto}
 .chart-scroll svg text{font-family:"IBM Plex Sans",sans-serif}
 .chart-scroll svg .n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
 .chart-scroll svg .brand{font-family:Archivo,sans-serif;font-weight:600}
-.chart-scroll svg .big{font-family:Archivo,sans-serif;font-weight:700}
-.bar-anim{transition:width .35s cubic-bezier(.4,0,.2,1)}
 .vs{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;letter-spacing:.1em;
   text-transform:uppercase;color:var(--muted);padding:0 3px}
-
-/* ---- funnels ---- */
-.funnels{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-soft)}
-.fn{background:var(--surface);padding:15px 18px 16px;display:flex;flex-direction:column;gap:9px}
-.fn-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.fn-head .b{font-family:Archivo,sans-serif;font-weight:600;font-size:13.5px}
-.chip{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;letter-spacing:.07em;
-  text-transform:uppercase;padding:3px 7px;border-radius:4px;background:var(--accent-soft);color:var(--accent)}
-.fn svg{display:block;width:100%;height:auto}
-.fn svg text{font-family:"IBM Plex Sans",sans-serif}
-.fn svg .n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:500}
 
 /* ---- table ---- */
 .tbl-scroll{overflow-x:auto}
@@ -147,24 +178,23 @@ th:first-child,td:first-child{text-align:left;padding-left:22px}
 th:last-child,td:last-child{padding-right:22px}
 tbody td{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:13.5px}
 tbody td:first-child{font-family:"IBM Plex Sans",sans-serif;font-size:14px}
-tbody tr:last-child td{border-bottom:0}
 tbody tr:hover td{background:var(--surface-2)}
+tfoot td{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:13.5px;
+  font-weight:600;background:var(--surface-2);border-bottom:0;border-top:1.5px solid var(--line)}
+tfoot td:first-child{font-family:Archivo,sans-serif;font-weight:700}
 td .b{font-family:Archivo,sans-serif;font-weight:600}
 td .c{color:var(--muted);font-size:12px}
 .roas-pill{display:inline-block;padding:3px 9px;border-radius:5px;font-weight:600;font-size:13px}
 
 /* ---- notes ---- */
-.notes{padding-top:8px;border-top:1px solid var(--line)}
+.notes{margin-top:6px;padding-top:12px;border-top:1px solid var(--line)}
 .notes p{margin:0;font-size:12px;color:var(--muted);line-height:1.6;max-width:78ch}
 .notes b{color:var(--ink-2);font-weight:600}
 
-@media (max-width:880px){
-  .brands{grid-template-columns:1fr}
-  .funnels{grid-template-columns:repeat(2,1fr)}
-}
-@media (max-width:580px){
-  .funnels{grid-template-columns:1fr}
-  .broas{font-size:32px}
+@media (max-width:760px){
+  .summary{grid-template-columns:repeat(2,1fr)}
+  .kv{grid-template-columns:repeat(2,1fr)}
+  .acct-roas b{font-size:26px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -189,44 +219,27 @@ td .c{color:var(--muted);font-size:12px}
 
   <div id="view-cpas">
 
-  <section class="brands" id="brands" aria-label="Marka bazlı özet"></section>
+  <section class="sec">
+    <h2>1 · Genel durum</h2>
+    <p>Seçili dönemde altı CPAS hesabının toplamı. ROAS burada toplam ciro ÷ toplam harcama.</p>
+  </section>
+  <dl class="summary" id="sum"></dl>
 
-  <section class="panel">
-    <div class="panel-head">
-      <h2>ROAS — başabaş çizgisine göre</h2>
-      <div class="legend">
-        <span><i style="background:var(--crit)"></i>zarar</span>
-        <span><i style="background:var(--warn)"></i>ince</span>
-        <span><i style="background:var(--pos)"></i>kârlı</span>
-        <span><i class="tick" style="background:var(--muted)"></i>geçen ay</span>
-      </div>
-    </div>
-    <div class="chart-scroll"><svg id="roas-chart" role="img" aria-label="Hesap bazlı ROAS grafiği"></svg></div>
+  <section class="sec">
+    <h2>2 · Hesaplar tek tek</h2>
+    <p>Her marka–pazaryeri hesabı kendi bloğunda, harcaması en yüksek olandan başlayarak.
+       Renk: <b>1,00×</b> altı zarar, <b>1,00–2,00×</b> ince, <b>2,00×</b> üstü kârlı.</p>
+  </section>
+  <div class="accts" id="accts"></div>
+
+  <section class="sec">
+    <h2>3 · Karşılaştırmalar</h2>
+    <p>Hesapların birbirine ve geçmiş dönemlere göre durumu.</p>
   </section>
 
   <section class="panel">
     <div class="panel-head">
-      <h2>Harcama karşılığı ciro</h2>
-      <div class="legend">
-        <span><i style="background:var(--neutral-bar)"></i>harcama</span>
-        <span><i style="background:var(--accent)"></i>ciro</span>
-        <span>ciro çubuğu kısaysa hesap para kaybediyor</span>
-      </div>
-    </div>
-    <div class="chart-scroll"><svg id="spend-chart" role="img" aria-label="Hesap bazlı harcama ve ciro grafiği"></svg></div>
-  </section>
-
-  <section class="panel">
-    <div class="panel-head">
-      <h2>Huni — görüntülemeden satışa</h2>
-      <span class="legend"><span>oranlar bir önceki adıma göre</span></span>
-    </div>
-    <div class="funnels" id="funnels"></div>
-  </section>
-
-  <section class="panel">
-    <div class="panel-head">
-      <h2>Trendyol <span class="vs">vs</span> Hepsiburada</h2>
+      <h3>Trendyol <span class="vs">vs</span> Hepsiburada</h3>
       <div class="legend">
         <span><i style="background:var(--ch-a)"></i>Trendyol</span>
         <span><i style="background:var(--ch-b)"></i>Hepsiburada</span>
@@ -238,14 +251,18 @@ td .c{color:var(--muted);font-size:12px}
 
   <section class="panel">
     <div class="panel-head">
-      <h2>Dönemler arası ROAS</h2>
+      <h3>Dönemler arası ROAS</h3>
       <span class="legend"><span>seçili dönem vurgulu · yatay çizgi başabaş</span></span>
     </div>
     <div class="chart-scroll"><svg id="period-chart" role="img" aria-label="Marka ve döneme göre ROAS"></svg></div>
   </section>
 
+  <section class="sec">
+    <h2>4 · Tüm rakamlar</h2>
+    <p>Yukarıdaki blokların ham hâli, tek tabloda.</p>
+  </section>
+
   <section class="panel">
-    <div class="panel-head"><h2>Tüm rakamlar</h2></div>
     <div class="tbl-scroll">
       <table>
         <thead><tr>
@@ -253,55 +270,64 @@ td .c{color:var(--muted);font-size:12px}
           <th>Satış</th><th>Sepet</th><th>Görüntüleme</th><th>Tıklama</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
+        <tfoot id="tfoot"></tfoot>
       </table>
     </div>
   </section>
 
   <footer class="notes">
     <p>Meta <b>catalog_segment</b> alanları — yalnızca pazaryeriyle paylaşılan katalog kalemleri.
-       <b>Bu Ay</b> ayın geçen kısmıdır, tam ay değildir. Meta sıfır değerli metrikleri yanıtta hiç
-       döndürmediği için <b>boş gelen satın alma ve ciro sıfır sayılmıştır</b>. ROAS her seviyede
-       önce toplanıp sonra bölünür: <b>toplam ciro ÷ toplam harcama</b>, kanal ROAS'larının ortalaması değil.
-       Huni gövdesi şekil olarak orantılı değildir; oranlar sağda yazar.</p>
+       <b>Bu Ay</b> ayın geçen kısmıdır, tam ay değildir; her dönem dünün sonunda biter, bugünün
+       yarım verisi girmez. Meta sıfır değerli metrikleri yanıtta hiç döndürmediği için
+       <b>boş gelen satın alma ve ciro sıfır sayılmıştır</b>. ROAS her seviyede önce toplanıp sonra
+       bölünür: <b>toplam ciro ÷ toplam harcama</b>, kanal ROAS'larının ortalaması değil.
+       Satış, Meta'nın attribution'ına göre <b>reklamın gösterildiği güne</b> yazılır — siparişin
+       düştüğü güne değil.</p>
   </footer>
 
   </div>
 
   <div id="view-d2c" hidden>
 
-  <section class="brands d2c-brands" id="d2c-brands" aria-label="D2C marka özeti"></section>
+  <section class="sec">
+    <h2>1 · Genel durum</h2>
+    <p>Seçili dönemde markaların kendi sitelerine giden reklamların toplamı.
+       ROAS = Shopify cirosu ÷ Meta harcaması.</p>
+  </section>
+  <dl class="summary" id="d2c-sum"></dl>
 
-  <section class="panel">
-    <div class="panel-head">
-      <h2>Harcama karşılığı Shopify cirosu</h2>
-      <div class="legend">
-        <span><i style="background:var(--neutral-bar)"></i>harcama</span>
-        <span><i style="background:var(--accent)"></i>Shopify cirosu</span>
-      </div>
-    </div>
-    <div class="chart-scroll"><svg id="d2c-spend-chart" role="img" aria-label="D2C harcama ve ciro grafiği"></svg></div>
+  <section class="sec">
+    <h2>2 · Markalar tek tek</h2>
+    <p>Her marka kendi bloğunda, harcaması en yüksek olandan başlayarak.</p>
+  </section>
+  <div class="accts" id="d2c-accts"></div>
+
+  <section class="sec">
+    <h2>3 · Tüm rakamlar</h2>
+    <p>Blokların ham hâli, tek tabloda.</p>
   </section>
 
   <section class="panel">
-    <div class="panel-head"><h2>Tüm rakamlar</h2></div>
     <div class="tbl-scroll">
       <table>
         <thead><tr>
-          <th>Marka</th><th>Reach</th><th>Impressions</th><th>Clicks</th>
+          <th>Marka</th><th>Erişim</th><th>Gösterim</th><th>Tıklama</th>
           <th>Harcama</th><th>Shopify Ciro</th><th>Shopify Sipariş</th><th>ROAS</th>
         </tr></thead>
         <tbody id="d2c-tbody"></tbody>
+        <tfoot id="d2c-tfoot"></tfoot>
       </table>
     </div>
   </section>
 
   <footer class="notes">
-    <p>Harcama ve reach/impressions/clicks markanın <b>kendi web sitesine</b> giden Meta hesabından —
+    <p>Harcama ve erişim/gösterim/tıklama markanın <b>kendi web sitesine</b> giden Meta hesabından —
        CPAS'taki pazaryeri ortak reklamlarıyla ilgisi yok. Ciro ve sipariş Shopify'ın kendi
-       <b>orders.json</b> uç noktasından, iptal edilen siparişler hariç. <b>ROAS = Meta harcaması ÷
-       Shopify cirosu</b> — Meta'nın kendi attribution'ı değil, çünkü Frime'ın pikseli satın alma
-       döndürmüyor. Shopify oturum (session) verisi bu raporda yok — Shopify'ın <b>read_reports</b>
-       izni ve ayrıca resmi "korumalı veri" onayı gerektiriyor, henüz talep edilmedi.</p>
+       <b>orders.json</b> uç noktasından, iptal edilen siparişler hariç. <b>ROAS = Shopify cirosu ÷
+       Meta harcaması</b> — Meta'nın kendi attribution'ı değil, çünkü Frime'ın pikseli satın alma
+       döndürmüyor. Sipariş <b>siparişin düştüğü güne</b> yazılır, bu yüzden CPAS'taki "Satış" ile
+       birebir aynı mantıkta değildir. Shopify oturum (session) verisi bu raporda yok — Shopify'ın
+       <b>read_reports</b> izni ve ayrıca resmi "korumalı veri" onayı gerektiriyor, henüz talep edilmedi.</p>
   </footer>
 
   </div>
@@ -311,100 +337,151 @@ td .c{color:var(--muted);font-size:12px}
 /*__DATA__*/
 
 // Meta, değeri sıfır olan metrikleri yanıtta hiç döndürmez — bu yüzden boş hücre
-// "ölçülemedi" değil "o dönem satış olmadı" demektir ve sıfır sayılır. Hücrenin
-// gerçekten boş geldiğini `reported` ile saklıyoruz, dipnotta açıklanıyor.
+// "ölçülemedi" değil "o dönem satış olmadı" demektir ve sıfır sayılır.
 const recs = D.map(r => ({
   brand:r[0], channel:r[1], period:r[2],
   spend:r[3], views:r[4], atc:r[5],
   purchases:r[6] === null ? 0 : r[6],
   value:r[7] === null ? 0 : r[7],
   clicks:r[8],
-  reported:r[7] !== null,
   roas:r[3] ? (r[7] === null ? 0 : r[7]) / r[3] : 0
+}));
+
+const d2cRecs = D2C.map(r => ({
+  brand:r[0], period:r[1], reach:r[2], impressions:r[3],
+  clicks:r[4], spend:r[5], revenue:r[6], orders:r[7],
+  // CPAS'taki gibi Meta'nın kendi attribution'ı değil: Shopify'ın gerçek cirosu
+  // ÷ Meta harcaması. Frime'ın pikseli satın alma döndürmediği için elde tek
+  // güvenilir ROAS kaynağı bu.
+  roas: r[5] ? r[6] / r[5] : 0
 }));
 
 const tl  = new Intl.NumberFormat("tr-TR",{maximumFractionDigits:0});
 const tl2 = new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2});
 const money   = v => "₺" + tl.format(Math.round(v));
-const moneyK  = v => v >= 1000 ? "₺" + tl.format(Math.round(v/1000)) + " B" : "₺" + tl.format(Math.round(v));
 const n       = v => tl.format(v);
+const pct     = v => "%" + tl2.format(v);
 const roasFmt = v => tl2.format(v) + "×";
 const esc     = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const sum     = (rows, f) => rows.reduce((t, r) => t + f(r), 0);
 
 const band = r => r < 1 ? "crit" : r < 2 ? "warn" : "pos";
-const ROAS_MAX = 5;
-
-const d2cRecs = D2C.map(r => ({
-  brand:r[0], period:r[1], reach:r[2], impressions:r[3],
-  clicks:r[4], spend:r[5], revenue:r[6], orders:r[7],
-  // CPAS'taki gibi Meta'nın kendi attribution'ı değil: Meta harcaması ÷
-  // Shopify'ın gerçek cirosu. Frime'ın pikseli satın alma döndürmediği için
-  // bu, elde tek güvenilir ROAS kaynağı.
-  roas: r[5] ? r[6] / r[5] : 0
-}));
 
 let current = 2;
 
-/* ---------------- charts ---------------- */
-const VB = 1000, GUT = 236, PX1 = 890, ROW = 48;
+/* ---------------- ortak parçalar ---------------- */
 
-function roasChart(rows){
-  const px0 = GUT, pw = PX1 - px0;
-  const H = 42 + rows.length * ROW + 6;
-  const x = v => px0 + Math.min(v, ROAS_MAX) / ROAS_MAX * pw;
-  let s = "";
-
-  for (let t = 0; t <= ROAS_MAX; t++){
-    const tx = x(t), be = t === 1;
-    s += `<line x1="${tx}" y1="34" x2="${tx}" y2="${H - 6}" stroke="var(--${be ? "ink-2" : "line-soft"})"
-          stroke-width="${be ? 1.4 : 1}" ${be ? 'opacity=".5"' : ""}></line>`;
-    s += `<text class="n" x="${tx}" y="26" text-anchor="middle" font-size="11" fill="var(--muted)">${tl2.format(t)}×</text>`;
-  }
-  s += `<text x="${x(1)}" y="12" text-anchor="middle" font-size="10.5" fill="var(--ink-2)"
-        letter-spacing=".08em">BAŞABAŞ</text>`;
-
-  rows.forEach((r, i) => {
-    const y = 42 + i * ROW, bh = 24, b = band(r.roas);
-    const prev = recs.find(z => z.brand === r.brand && z.channel === r.channel && z.period === 4);
-    s += `<text class="brand" x="${px0 - 14}" y="${y + 11}" text-anchor="end" font-size="14.5" fill="var(--ink)">${esc(r.brand)}</text>`;
-    s += `<text x="${px0 - 14}" y="${y + 26}" text-anchor="end" font-size="11.5" fill="var(--muted)">${esc(r.channel)}</text>`;
-    s += `<rect x="${px0}" y="${y}" width="${pw}" height="${bh}" rx="4" fill="var(--track)" opacity=".55"></rect>`;
-    if (r.roas > 0)
-      s += `<rect x="${px0}" y="${y}" width="${x(r.roas) - px0}" height="${bh}" rx="4" fill="var(--${b})"></rect>`;
-    s += `<text class="big" x="${PX1 + 14}" y="${y + 17.5}" font-size="17" fill="var(--${b})">${roasFmt(r.roas)}</text>`;
-    if (prev && current !== 4){
-      const pxp = x(prev.roas);
-      s += `<rect x="${pxp - 1.5}" y="${y - 4}" width="3" height="${bh + 8}" rx="1.5" fill="var(--muted)"></rect>`;
-    }
-  });
-  return {svg:s, H};
+// Özet şeridi: dört büyük sayı, hepsi aynı dönemin toplamı.
+function summaryStrip(items){
+  return items.map(it => `
+    <div class="sum">
+      <dt>${it.k}</dt>
+      <dd style="${it.color ? `color:var(--${it.color})` : ""}">${it.v}${
+        it.note ? `<small>${it.note}</small>` : ""}</dd>
+    </div>`).join("");
 }
 
-function spendChart(rows){
-  const px0 = GUT, pw = PX1 - px0 - 78;
-  const max = Math.max(...rows.map(r => Math.max(r.spend, r.value || 0))) || 1;
-  const H = 42 + rows.length * ROW + 6;
-  const w = v => Math.max(v / max * pw, v > 0 ? 2 : 0);
-  let s = "";
-
-  const step = max / 4;
-  for (let t = 0; t <= 4; t++){
-    const tx = px0 + t / 4 * pw;
-    s += `<line x1="${tx}" y1="34" x2="${tx}" y2="${H - 6}" stroke="var(--line-soft)" stroke-width="1"></line>`;
-    s += `<text class="n" x="${tx}" y="26" text-anchor="middle" font-size="11" fill="var(--muted)">${moneyK(step * t)}</text>`;
-  }
-
-  rows.forEach((r, i) => {
-    const y = 42 + i * ROW;
-    s += `<text class="brand" x="${px0 - 14}" y="${y + 11}" text-anchor="end" font-size="14.5" fill="var(--ink)">${esc(r.brand)}</text>`;
-    s += `<text x="${px0 - 14}" y="${y + 26}" text-anchor="end" font-size="11.5" fill="var(--muted)">${esc(r.channel)}</text>`;
-    s += `<rect x="${px0}" y="${y + 1}" width="${w(r.spend)}" height="12" rx="2.5" fill="var(--neutral-bar)"></rect>`;
-    s += `<text class="n" x="${px0 + w(r.spend) + 7}" y="${y + 11}" font-size="10.5" fill="var(--muted)">${moneyK(r.spend)}</text>`;
-    s += `<rect x="${px0}" y="${y + 17}" width="${w(r.value)}" height="12" rx="2.5" fill="var(--accent)"></rect>`;
-    s += `<text class="n" x="${px0 + w(r.value) + 7}" y="${y + 27}" font-size="10.5" fill="var(--ink-2)">${moneyK(r.value)}</text>`;
-  });
-  return {svg:s, H};
+// İki çubuk hesabın kendi içinde ölçekleniyor — hesaplar arası kıyas için
+// "toplam harcamanın %x'i" satırı var, çubuklar o işi yapmıyor. Küçük hesabın
+// çubuğu böylece görünmez olmuyor.
+function duoRow(k, v, max, color){
+  const w = max ? Math.max(v / max * 100, v > 0 ? 1.5 : 0) : 0;
+  return `
+  <div class="duo-row">
+    <span class="duo-k">${k}</span>
+    <div class="duo-track"><div class="duo-fill" style="width:${w}%;background:${color}"></div></div>
+    <span class="duo-v">${money(v)}</span>
+  </div>`;
 }
+
+const step = (k, v, rate) => `
+  <li class="step">
+    <span class="step-k">${k}</span>
+    <span class="step-v">${v}</span>
+    <span class="step-r">${rate}</span>
+  </li>`;
+
+/* ---------------- CPAS hesap bloğu ---------------- */
+function acctBlock(r, totalSpend){
+  const b = band(r.roas);
+  const max = Math.max(r.spend, r.value) || 1;
+  const share    = totalSpend ? r.spend / totalSpend * 100 : 0;
+  const atcRate  = r.views ? r.atc / r.views * 100 : 0;
+  const buyRate  = r.atc ? r.purchases / r.atc * 100 : 0;
+  const cpa      = r.purchases ? r.spend / r.purchases : 0;
+
+  return `
+  <article class="acct" style="--bc:var(--${b})">
+    <div class="acct-head">
+      <div class="acct-id">
+        <span class="acct-name">${esc(r.brand)}</span>
+        <span class="chip">${esc(r.channel)}</span>
+      </div>
+      <div class="acct-roas"><b>${roasFmt(r.roas)}</b><span>ROAS</span></div>
+    </div>
+    <div class="acct-body">
+      <dl class="kv">
+        <div><dt>Harcama</dt><dd>${money(r.spend)}<small>toplam harcamanın ${pct(share)}'i</small></dd></div>
+        <div><dt>Ciro</dt><dd>${money(r.value)}<small>₺1 harcamaya ₺${tl2.format(r.roas)}</small></dd></div>
+        <div><dt>Satış</dt><dd>${n(r.purchases)}<small>${
+          r.purchases ? "satış başına " + money(cpa) : "bu dönem satış yok"}</small></dd></div>
+        <div><dt>Tıklama</dt><dd>${n(r.clicks)}</dd></div>
+      </dl>
+      <div class="duo">
+        ${duoRow("Harcama", r.spend, max, "var(--neutral-bar)")}
+        ${duoRow("Ciro", r.value, max, "var(--accent)")}
+      </div>
+      <ol class="steps">
+        ${step("Görüntüleme", n(r.views), "huninin girişi")}
+        ${step("Sepete ekleme", n(r.atc), `görüntülemeden dönüşüm <b>${pct(atcRate)}</b>`)}
+        ${step("Satın alma", n(r.purchases), `sepetten dönüşüm <b>${pct(buyRate)}</b>`)}
+      </ol>
+    </div>
+  </article>`;
+}
+
+/* ---------------- D2C marka bloğu ---------------- */
+function d2cBlock(r, totalSpend){
+  const b = band(r.roas);
+  const max = Math.max(r.spend, r.revenue) || 1;
+  const share = totalSpend ? r.spend / totalSpend * 100 : 0;
+  const freq  = r.reach ? r.impressions / r.reach : 0;
+  const ctr   = r.impressions ? r.clicks / r.impressions * 100 : 0;
+  const cvr   = r.clicks ? r.orders / r.clicks * 100 : 0;
+  const aov   = r.orders ? r.revenue / r.orders : 0;
+
+  return `
+  <article class="acct" style="--bc:var(--${b})">
+    <div class="acct-head">
+      <div class="acct-id">
+        <span class="acct-name">${esc(r.brand)}</span>
+        <span class="chip">Kendi sitesi</span>
+      </div>
+      <div class="acct-roas"><b>${roasFmt(r.roas)}</b><span>ROAS</span></div>
+    </div>
+    <div class="acct-body">
+      <dl class="kv">
+        <div><dt>Harcama</dt><dd>${money(r.spend)}<small>toplam harcamanın ${pct(share)}'i</small></dd></div>
+        <div><dt>Shopify cirosu</dt><dd>${money(r.revenue)}<small>₺1 harcamaya ₺${tl2.format(r.roas)}</small></dd></div>
+        <div><dt>Sipariş</dt><dd>${n(r.orders)}<small>${
+          r.orders ? "sepet ortalaması " + money(aov) : "bu dönem sipariş yok"}</small></dd></div>
+        <div><dt>Erişim</dt><dd>${n(r.reach)}<small>kişi başı ${tl2.format(freq)} gösterim</small></dd></div>
+      </dl>
+      <div class="duo">
+        ${duoRow("Harcama", r.spend, max, "var(--neutral-bar)")}
+        ${duoRow("Ciro", r.revenue, max, "var(--accent)")}
+      </div>
+      <ol class="steps">
+        ${step("Gösterim", n(r.impressions), "reklamın açılma sayısı")}
+        ${step("Tıklama", n(r.clicks), `gösterimden dönüşüm <b>${pct(ctr)}</b>`)}
+        ${step("Sipariş", n(r.orders), `tıklamadan dönüşüm <b>${pct(cvr)}</b>`)}
+      </ol>
+    </div>
+  </article>`;
+}
+
+/* ---------------- karşılaştırma grafikleri ---------------- */
+const VB = 1000;
 
 function paint(id, built){
   const el = document.getElementById(id);
@@ -412,88 +489,20 @@ function paint(id, built){
   el.innerHTML = built.svg;
 }
 
-/* ---- D2C: harcama vs Shopify cirosu, marka satırları ---- */
-function d2cSpendChart(rows){
-  const px0 = GUT, pw = PX1 - px0 - 78;
-  const max = Math.max(...rows.map(r => Math.max(r.spend, r.revenue))) || 1;
-  const H = 42 + rows.length * ROW + 6;
-  const w = v => Math.max(v / max * pw, v > 0 ? 2 : 0);
-  let s = "";
-
-  const step = max / 4;
-  for (let t = 0; t <= 4; t++){
-    const tx = px0 + t / 4 * pw;
-    s += `<line x1="${tx}" y1="34" x2="${tx}" y2="${H - 6}" stroke="var(--line-soft)" stroke-width="1"></line>`;
-    s += `<text class="n" x="${tx}" y="26" text-anchor="middle" font-size="11" fill="var(--muted)">${moneyK(step * t)}</text>`;
-  }
-
-  rows.forEach((r, i) => {
-    const y = 42 + i * ROW;
-    s += `<text class="brand" x="${px0 - 14}" y="${y + 18}" text-anchor="end" font-size="14.5" fill="var(--ink)">${esc(r.brand)}</text>`;
-    s += `<rect x="${px0}" y="${y + 1}" width="${w(r.spend)}" height="12" rx="2.5" fill="var(--neutral-bar)"></rect>`;
-    s += `<text class="n" x="${px0 + w(r.spend) + 7}" y="${y + 11}" font-size="10.5" fill="var(--muted)">${moneyK(r.spend)}</text>`;
-    s += `<rect x="${px0}" y="${y + 17}" width="${w(r.revenue)}" height="12" rx="2.5" fill="var(--accent)"></rect>`;
-    s += `<text class="n" x="${px0 + w(r.revenue) + 7}" y="${y + 27}" font-size="10.5" fill="var(--ink-2)">${moneyK(r.revenue)}</text>`;
-  });
-  return {svg:s, H};
-}
-
-function d2cRender(){
-  const rows = d2cRecs.filter(r => r.period === current);
-
-  document.getElementById("d2c-brands").innerHTML = rows.map(r => { const b = band(r.roas); return `
-    <article class="bcard" style="--bc:var(--${b})">
-      <span class="bname">${esc(r.brand)}</span>
-      <div class="gauge-row">
-        <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas)}</svg>
-        <div class="gauge-txt">
-          <span class="broas">${roasFmt(r.roas)}</span>
-          <span class="blabel">₺1 harcamaya ₺${tl2.format(r.roas)} Shopify cirosu</span>
-        </div>
-      </div>
-      <dl class="bstats">
-        <div><dt>Harcama</dt><dd>${money(r.spend)}</dd></div>
-        <div><dt>Revenue</dt><dd>${money(r.revenue)}</dd></div>
-        <div><dt>Reach</dt><dd>${n(r.reach)}</dd></div>
-        <div><dt>Impressions</dt><dd>${n(r.impressions)}</dd></div>
-        <div><dt>Clicks</dt><dd>${n(r.clicks)}</dd></div>
-        <div><dt>Sipariş</dt><dd>${n(r.orders)}</dd></div>
-      </dl>
-    </article>`; }).join("");
-
-  paint("d2c-spend-chart", d2cSpendChart(rows));
-
-  document.getElementById("d2c-tbody").innerHTML = rows.map(r => { const b = band(r.roas); return `
-    <tr>
-      <td><span class="b">${esc(r.brand)}</span></td>
-      <td>${n(r.reach)}</td>
-      <td>${n(r.impressions)}</td>
-      <td>${n(r.clicks)}</td>
-      <td>${money(r.spend)}</td>
-      <td>${money(r.revenue)}</td>
-      <td>${n(r.orders)}</td>
-      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${roasFmt(r.roas)}</span></td>
-    </tr>`; }).join("");
-}
-
-/* ---- kanal karşılaştırması: ortadan ayrılan çift yönlü çubuklar ---- */
+/* kanal karşılaştırması: ortadan ayrılan çift yönlü çubuklar */
 function vsChart(rows){
   // BAR, en uzun çubuğun ucundaki tutar etiketi viewBox dışına taşmayacak
   // şekilde sınırlı: 500 - 78 - 300 = 122 birim etiket payı kalıyor.
   const CX = 500, GAP = 78, BAR = 300, RH = 56;
-  const L = CX - GAP, R = CX + GAP;              // çubukların iç uçları
+  const L = CX - GAP, R = CX + GAP;
   const channels = ["Trendyol", "Hepsiburada"];
 
   const agg = channels.map(ch => {
     const cr = rows.filter(r => r.channel === ch);
-    const spend = cr.reduce((s, r) => s + r.spend, 0);
-    const rev   = cr.reduce((s, r) => s + r.value, 0);
-    return {
-      ch, spend, rev,
-      roas: spend ? rev / spend : 0,
-      pur: cr.reduce((s, r) => s + r.purchases, 0),
-      atc: cr.reduce((s, r) => s + r.atc, 0)
-    };
+    const spend = sum(cr, r => r.spend);
+    const rev   = sum(cr, r => r.value);
+    return {ch, spend, rev, roas: spend ? rev / spend : 0,
+            pur: sum(cr, r => r.purchases), atc: sum(cr, r => r.atc)};
   });
   const [a, b] = agg;
 
@@ -508,7 +517,6 @@ function vsChart(rows){
   const H = 46 + metrics.length * RH + 6;
   let s = "";
 
-  // başlıklar
   s += `<text class="brand" x="${L}" y="22" text-anchor="end" font-size="15" fill="var(--ch-a)">Trendyol</text>`;
   s += `<text class="brand" x="${R}" y="22" text-anchor="start" font-size="15" fill="var(--ch-b)">Hepsiburada</text>`;
   s += `<line x1="${CX}" y1="30" x2="${CX}" y2="${H - 6}" stroke="var(--line)" stroke-width="1"></line>`;
@@ -531,7 +539,7 @@ function vsChart(rows){
   return {svg:s, H};
 }
 
-/* ---- dönemler arası ROAS: marka başına gruplanmış sütunlar ---- */
+/* dönemler arası ROAS: marka başına gruplanmış sütunlar */
 function periodChart(){
   const X0 = 56, X1 = 968, Y0 = 26, Y1 = 214, MAXR = 5;
   const H = Y1 + 58;  // dönem etiketi (+16) ve marka adı (+46) için taban payı
@@ -552,13 +560,13 @@ function periodChart(){
     if (gi) s += `<line x1="${gx}" y1="${Y0 - 6}" x2="${gx}" y2="${Y1 + 30}" stroke="var(--line-soft)" stroke-width="1"></line>`;
     s += `<text class="brand" x="${gx + gw / 2}" y="${Y1 + 46}" text-anchor="middle" font-size="14" fill="var(--ink)">${esc(brand)}</text>`;
 
-    const inner = gw * 0.82, bw = inner / PERIODS.length * 0.72, step = inner / PERIODS.length;
+    const inner = gw * 0.82, bw = inner / PERIODS.length * 0.72, stepw = inner / PERIODS.length;
     PERIODS.forEach((p, pi) => {
       const br = recs.filter(r => r.brand === brand && r.period === p.id);
-      const spend = br.reduce((t2, r) => t2 + r.spend, 0);
-      const rev   = br.reduce((t2, r) => t2 + r.value, 0);
+      const spend = sum(br, r => r.spend);
+      const rev   = sum(br, r => r.value);
       const roas  = spend ? rev / spend : 0;
-      const bx = gx + gw * 0.09 + pi * step + (step - bw) / 2;
+      const bx = gx + gw * 0.09 + pi * stepw + (stepw - bw) / 2;
       const by = y(roas), sel = p.id === current;
       s += `<rect x="${bx}" y="${by}" width="${bw}" height="${Y1 - by}" rx="3"
             fill="var(--${band(roas)})" opacity="${sel ? 1 : .4}"></rect>`;
@@ -572,110 +580,28 @@ function periodChart(){
   return {svg:s, H};
 }
 
-/* ---- gauge: yarım daire, 0–5× ölçek, 1,0× başabaş çentiği ---- */
-function gauge(roas){
-  const cx = 66, cy = 68, r = 52, sw = 13;
-  const pt = (rad, deg) => {
-    const a = deg * Math.PI / 180;
-    return [cx + rad * Math.cos(a), cy + rad * Math.sin(a)];
-  };
-  const arc = (from, to, color, width) => {
-    const [x0, y0] = pt(r, from), [x1, y1] = pt(r, to);
-    return `<path d="M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}" fill="none"
-            stroke="${color}" stroke-width="${width}" stroke-linecap="round"></path>`;
-  };
-  const f = Math.min(roas, ROAS_MAX) / ROAS_MAX;
-  const end = 180 + f * 180;
-  let s = arc(180, 360, "var(--track)", sw);
-  if (f > 0.004) s += arc(180, end, `var(--${band(roas)})`, sw);
-  // başabaş çentiği (1,0×)
-  const bDeg = 180 + (1 / ROAS_MAX) * 180;
-  const [bx0, by0] = pt(r - sw / 2 - 3, bDeg), [bx1, by1] = pt(r + sw / 2 + 3, bDeg);
-  s += `<line x1="${bx0}" y1="${by0}" x2="${bx1}" y2="${by1}" stroke="var(--ink-2)" stroke-width="1.6" opacity=".6"></line>`;
-  s += `<text class="n" x="${bx1 - 1}" y="${by1 - 6}" font-size="9" fill="var(--muted)" text-anchor="middle">1,0</text>`;
-  s += `<text class="n" x="12" y="77" font-size="9" fill="var(--muted)">0</text>`;
-  s += `<text class="n" x="120" y="77" font-size="9" fill="var(--muted)" text-anchor="end">5</text>`;
-  return s;
-}
-
-/* ---- huni: gerçek daralan huni gövdesi ---- */
-function funnel(r){
-  const W = 268, LX = 150, top = 14, bh = 38;
-  const H = top + bh * 3 + 10;
-  // şekil algılanabilir kalsın diye kuvvet ölçeği; gerçek sayılar sağda yazıyor
-  const wid = v => {
-    if (!r.views || v <= 0) return 12;
-    return 18 + 118 * Math.pow(v / r.views, 0.34);
-  };
-  const w1 = 136, w2 = wid(r.atc), w3 = wid(r.purchases);
-  const cx = 68;
-  const seg = (y, wt, wb, fill, op) =>
-    `<path d="M${cx - wt / 2} ${y} L${cx + wt / 2} ${y} L${cx + wb / 2} ${y + bh} L${cx - wb / 2} ${y + bh} Z"
-      fill="${fill}" opacity="${op}"></path>`;
-
-  const atcRate = r.views ? r.atc / r.views * 100 : 0;
-  const buyRate = r.atc ? r.purchases / r.atc * 100 : 0;
-
-  const label = (y, name, val, rate) => `
-    <text x="${LX}" y="${y + 15}" font-size="11" fill="var(--muted)">${name}</text>
-    <text class="n" x="${LX}" y="${y + 31}" font-size="15" fill="var(--ink)">${val}</text>
-    ${rate ? `<text class="n" x="${W - 4}" y="${y + 31}" font-size="11" fill="var(--ink-2)" text-anchor="end">${rate}</text>` : ""}`;
-
-  return `
-  <div class="fn">
-    <div class="fn-head"><span class="b">${esc(r.brand)}</span><span class="chip">${esc(r.channel)}</span></div>
-    <svg viewBox="0 0 ${W} ${H}" role="img"
-         aria-label="${esc(r.brand)} ${esc(r.channel)} hunisi: ${n(r.views)} görüntüleme, ${n(r.atc)} sepet, ${n(r.purchases)} satın alma">
-      ${seg(top, w1, w2, "var(--accent)", ".30")}
-      ${seg(top + bh, w2, w3, "var(--accent)", ".62")}
-      ${seg(top + bh * 2, w3, w3, `var(--${band(r.roas)})`, ".95")}
-      <line x1="${cx - w2 / 2}" y1="${top + bh}" x2="${cx + w2 / 2}" y2="${top + bh}" stroke="var(--surface)" stroke-width="1.5"></line>
-      <line x1="${cx - w3 / 2}" y1="${top + bh * 2}" x2="${cx + w3 / 2}" y2="${top + bh * 2}" stroke="var(--surface)" stroke-width="1.5"></line>
-      ${label(top, "Görüntüleme", n(r.views), "")}
-      ${label(top + bh, "Sepete ekleme", n(r.atc), tl2.format(atcRate) + "%")}
-      ${label(top + bh * 2, "Satın alma", n(r.purchases), tl2.format(buyRate) + "%")}
-    </svg>
-  </div>`;
-}
-
 /* ---------------- render ---------------- */
 function render(){
   const rows = recs.filter(r => r.period === current).sort((a, b) => b.spend - a.spend);
   const p = PERIODS.find(x => x.id === current);
   document.getElementById("range").textContent = p.range;
 
-  // Her hesap (marka + pazaryeri) kendi kartında durur; kanallar toplanmaz.
-  // Aynı markanın iki kanalı yan yana gelsin diye harcamaya değil marka adına
-  // göre sıralıyoruz — kartlarda karşılaştırma bu şekilde okunaklı.
-  const cards = [...rows].sort((a, b) =>
-    a.brand.localeCompare(b.brand, "tr") || a.channel.localeCompare(b.channel, "tr"));
+  const tSpend = sum(rows, r => r.spend);
+  const tValue = sum(rows, r => r.value);
+  const tPur   = sum(rows, r => r.purchases);
+  const tRoas  = tSpend ? tValue / tSpend : 0;
 
-  document.getElementById("brands").innerHTML = cards.map(r => {
-    const b = band(r.roas);
-    return `
-    <article class="bcard" style="--bc:var(--${b})">
-      <div class="bhead"><span class="bname">${esc(r.brand)}</span><span class="chip">${esc(r.channel)}</span></div>
-      <div class="gauge-row">
-        <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas)}</svg>
-        <div class="gauge-txt">
-          <span class="broas">${roasFmt(r.roas)}</span>
-          <span class="blabel">₺1 harcamaya ₺${tl2.format(r.roas)} ciro</span>
-        </div>
-      </div>
-      <dl class="bstats">
-        <div><dt>Harcama</dt><dd>${money(r.spend)}</dd></div>
-        <div><dt>Ciro</dt><dd>${money(r.value)}</dd></div>
-        <div><dt>Satış</dt><dd>${n(r.purchases)}</dd></div>
-      </dl>
-    </article>`;
-  }).join("");
+  document.getElementById("sum").innerHTML = summaryStrip([
+    {k:"Toplam harcama", v:money(tSpend), note:`${rows.length} hesap`},
+    {k:"Toplam ciro", v:money(tValue)},
+    {k:"ROAS", v:roasFmt(tRoas), color:band(tRoas), note:`₺1 harcamaya ₺${tl2.format(tRoas)}`},
+    {k:"Satış", v:n(tPur), note:tPur ? "satış başına " + money(tSpend / tPur) : "satış yok"}
+  ]);
 
-  paint("roas-chart", roasChart(rows));
-  paint("spend-chart", spendChart(rows));
+  document.getElementById("accts").innerHTML = rows.map(r => acctBlock(r, tSpend)).join("");
+
   paint("vs-chart", vsChart(rows));
   paint("period-chart", periodChart());
-
-  document.getElementById("funnels").innerHTML = rows.map(r => funnel(r)).join("");
 
   document.getElementById("tbody").innerHTML = rows.map(r => {
     const b = band(r.roas);
@@ -691,10 +617,64 @@ function render(){
     </tr>`;
   }).join("");
 
+  document.getElementById("tfoot").innerHTML = `<tr>
+    <td>Toplam</td>
+    <td>${money(tSpend)}</td>
+    <td>${money(tValue)}</td>
+    <td><span class="roas-pill" style="color:var(--${band(tRoas)});background:var(--surface)">${roasFmt(tRoas)}</span></td>
+    <td>${n(tPur)}</td>
+    <td>${n(sum(rows, r => r.atc))}</td>
+    <td>${n(sum(rows, r => r.views))}</td>
+    <td>${n(sum(rows, r => r.clicks))}</td>
+  </tr>`;
+
   document.querySelectorAll("#seg button").forEach(btn =>
     btn.setAttribute("aria-pressed", String(Number(btn.dataset.p) === current)));
 
   d2cRender();
+}
+
+function d2cRender(){
+  const rows = d2cRecs.filter(r => r.period === current).sort((a, b) => b.spend - a.spend);
+
+  const tSpend = sum(rows, r => r.spend);
+  const tRev   = sum(rows, r => r.revenue);
+  const tOrd   = sum(rows, r => r.orders);
+  const tRoas  = tSpend ? tRev / tSpend : 0;
+
+  document.getElementById("d2c-sum").innerHTML = summaryStrip([
+    {k:"Toplam harcama", v:money(tSpend), note:`${rows.length} marka`},
+    {k:"Shopify cirosu", v:money(tRev)},
+    {k:"ROAS", v:roasFmt(tRoas), color:band(tRoas), note:`₺1 harcamaya ₺${tl2.format(tRoas)}`},
+    {k:"Sipariş", v:n(tOrd), note:tOrd ? "sipariş başına " + money(tSpend / tOrd) : "sipariş yok"}
+  ]);
+
+  document.getElementById("d2c-accts").innerHTML = rows.map(r => d2cBlock(r, tSpend)).join("");
+
+  document.getElementById("d2c-tbody").innerHTML = rows.map(r => {
+    const b = band(r.roas);
+    return `<tr>
+      <td><span class="b">${esc(r.brand)}</span></td>
+      <td>${n(r.reach)}</td>
+      <td>${n(r.impressions)}</td>
+      <td>${n(r.clicks)}</td>
+      <td>${money(r.spend)}</td>
+      <td>${money(r.revenue)}</td>
+      <td>${n(r.orders)}</td>
+      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${roasFmt(r.roas)}</span></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("d2c-tfoot").innerHTML = `<tr>
+    <td>Toplam</td>
+    <td>${n(sum(rows, r => r.reach))}</td>
+    <td>${n(sum(rows, r => r.impressions))}</td>
+    <td>${n(sum(rows, r => r.clicks))}</td>
+    <td>${money(tSpend)}</td>
+    <td>${money(tRev)}</td>
+    <td>${n(tOrd)}</td>
+    <td><span class="roas-pill" style="color:var(--${band(tRoas)});background:var(--surface)">${roasFmt(tRoas)}</span></td>
+  </tr>`;
 }
 
 document.getElementById("stamp").textContent = UPDATED;
@@ -718,8 +698,7 @@ document.getElementById("channel-seg").addEventListener("click", e => {
   document.getElementById("view-cpas").hidden = isD2C;
   document.getElementById("view-d2c").hidden = !isD2C;
   // Dönem seçici her iki sekmede de kullanılıyor — D2C de CPAS ile aynı
-  // dört dönemi (Dün/Son 7 Gün/Bu Ay/Geçen Ay) paylaşıyor, o yüzden
-  // burada gizlenmiyor.
+  // dört dönemi (Dün/Son 7 Gün/Bu Ay/Geçen Ay) paylaşıyor.
   document.getElementById("eyebrow").textContent = isD2C
     ? "Aqua di Polo & Frime · kendi web sitesi, Shopify cirosu"
     : "Trendyol & Hepsiburada · CPAS ortak reklamlar";
