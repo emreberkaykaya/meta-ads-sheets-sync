@@ -92,6 +92,7 @@ body{
   box-shadow:var(--shadow);padding:16px 20px 18px;display:flex;flex-direction:column;gap:12px;
   border-top:3px solid var(--bc)}
 .bname{font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.018em}
+.bhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .gauge-row{display:flex;align-items:center;gap:14px}
 .gauge{width:112px;height:66px;flex:none}
 .gauge-txt{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -643,31 +644,28 @@ function render(){
   const p = PERIODS.find(x => x.id === current);
   document.getElementById("range").textContent = p.range;
 
-  // Markalar ayrı işler; ROAS'ları toplanmaz, her marka kendi kartında durur.
-  const brands = [...new Set(recs.map(r => r.brand))];
-  document.getElementById("brands").innerHTML = brands.map(brand => {
-    const br = rows.filter(r => r.brand === brand);
-    // Markanın ROAS'ı, kanal ROAS'larının ortalaması değil: önce iki kanalın cirosu
-    // ve harcaması ayrı ayrı toplanır, sonra bölünür.
-    const mSpend = br.reduce((s, r) => s + r.spend, 0);
-    const mRev   = br.reduce((s, r) => s + r.value, 0);
-    const roas   = mSpend ? mRev / mSpend : 0;
-    const pur    = br.reduce((s, r) => s + r.purchases, 0);
-    const b = band(roas);
+  // Her hesap (marka + pazaryeri) kendi kartında durur; kanallar toplanmaz.
+  // Aynı markanın iki kanalı yan yana gelsin diye harcamaya değil marka adına
+  // göre sıralıyoruz — kartlarda karşılaştırma bu şekilde okunaklı.
+  const cards = [...rows].sort((a, b) =>
+    a.brand.localeCompare(b.brand, "tr") || a.channel.localeCompare(b.channel, "tr"));
+
+  document.getElementById("brands").innerHTML = cards.map(r => {
+    const b = band(r.roas);
     return `
     <article class="bcard" style="--bc:var(--${b})">
-      <span class="bname">${esc(brand)}</span>
+      <div class="bhead"><span class="bname">${esc(r.brand)}</span><span class="chip">${esc(r.channel)}</span></div>
       <div class="gauge-row">
-        <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(roas === null ? 0 : roas)}</svg>
+        <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas)}</svg>
         <div class="gauge-txt">
-          <span class="broas">${roasFmt(roas)}</span>
-          <span class="blabel">₺1 harcamaya ₺${tl2.format(roas)} ciro<br>${br.length} kanal toplamı</span>
+          <span class="broas">${roasFmt(r.roas)}</span>
+          <span class="blabel">₺1 harcamaya ₺${tl2.format(r.roas)} ciro</span>
         </div>
       </div>
       <dl class="bstats">
-        <div><dt>Harcama</dt><dd>${money(mSpend)}</dd></div>
-        <div><dt>Ciro</dt><dd>${money(mRev)}</dd></div>
-        <div><dt>Satış</dt><dd>${n(pur)}</dd></div>
+        <div><dt>Harcama</dt><dd>${money(r.spend)}</dd></div>
+        <div><dt>Ciro</dt><dd>${money(r.value)}</dd></div>
+        <div><dt>Satış</dt><dd>${n(r.purchases)}</dd></div>
       </dl>
     </article>`;
   }).join("");

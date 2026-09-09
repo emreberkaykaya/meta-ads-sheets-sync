@@ -58,17 +58,16 @@ BRAND_TOKEN_ENV_VAR = {
     "Pierre Cardin": "META_ACCESS_TOKEN_PIERRE_CARDIN",
 }
 
-# Sabit dönemler: (görünen isim, Graph API date_preset, gösterim sırası).
+# Dönemler tek bir yerden, `period_bounds()` ile üretiliyor — Graph API'nin
+# hazır date_preset'leri KULLANILMIYOR. Sebebi: Meta'nın `this_month` preset'i
+# bugünü de (yarım günü) kapsarken Shopify tarafı bugünü dışarıda bırakıyordu;
+# bu da CPAS ile D2C sekmelerinin aynı "Bu Ay" etiketi altında farklı tarih
+# aralıkları göstermesine yol açıyordu. Artık iki taraf da aynı sınırları
+# kullanıyor: her dönem dünün sonunda biter, bugünün yarım verisi hiç girmez.
+#
 # "Bu Ay" ve "Geçen Ay" birbirini kapsamayan ayrı takvim aralıkları olduğu
 # için (nested değiller), metrik büyüklüğüne göre sıralamak kronolojik
-# sırayı garanti etmez — bu yüzden açık bir "Sıra" sütunu tutuyoruz ve
-# Looker Studio tablolarını buna göre sıralıyoruz.
-PERIODS = [
-    ("Dün", "yesterday", 1),
-    ("Son 7 Gün", "last_7d", 2),
-    ("Bu Ay", "this_month", 3),
-    ("Geçen Ay", "last_month", 4),
-]
+# sırayı garanti etmez — bu yüzden açık bir "Sıra" sütunu tutuyoruz.
 
 INSIGHTS_FIELDS = [
     "spend",
@@ -127,10 +126,8 @@ D2C_SHEET_HEADER = [
     "Son Güncelleme (UTC)",
 ]
 
-# Meta'nın date_preset'leriyle aynı takvim mantığı, ama Shopify orders.json
-# created_at_min/max ile sorgulanabilecek somut tarih sınırları üretir.
-# Europe/Istanbul yerel saatiyle hesaplanır ki "Dün" ve "Bu Ay" iki sistemde
-# de aynı günü işaret etsin.
+# Dönem sınırları Europe/Istanbul yerel saatiyle hesaplanır ki "Dün" ve
+# "Bu Ay" Meta ile Shopify'da aynı günleri işaret etsin.
 try:
     from zoneinfo import ZoneInfo
     ISTANBUL = ZoneInfo("Europe/Istanbul")
@@ -138,9 +135,9 @@ except ImportError:  # pragma: no cover
     ISTANBUL = timezone(timedelta(hours=3))
 
 
-def d2c_period_bounds():
-    """PERIODS ile aynı sırayla [(label, since, until, sort_order), ...] döner.
-    `since` dahil, `until` hariçtir (yarı açık aralık)."""
+def period_bounds():
+    """Hem CPAS hem D2C'nin kullandığı tek dönem tanımı:
+    [(label, since, until, sort_order), ...] — `since` dahil, `until` hariç."""
     now_ist = datetime.now(ISTANBUL)
     today_start = now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
     yesterday_start = today_start - timedelta(days=1)
@@ -157,19 +154,23 @@ def d2c_period_bounds():
     ]
 
 
-def fetch_d2c_meta_metrics(ad_account_id: str, access_token: str, since: datetime, until: datetime) -> dict:
-    """Şimdiki ana kadar süren dönemler (Dün hariç) `until`ı 'bugün' olarak
-    Meta'ya gönderemez — Graph API `time_range` gün bazlıdır ve until dahildir.
-    Bu yüzden until'dan 1 gün çıkarıp gün bazlı kapsayıcı aralığa çeviriyoruz."""
+def meta_time_range(since: datetime, until: datetime) -> str:
+    """Yarı açık [since, until) aralığını Graph API'nin `time_range` biçimine
+    çevirir. Graph API gün bazlıdır ve `until` DAHİLDİR, bu yüzden until'dan
+    bir gün çıkarıyoruz — aksi halde her dönem bugünün yarım verisini de
+    kapsar ve Shopify tarafıyla tutmaz."""
     since_day = since.date()
     until_day = (until - timedelta(days=1)).date()
     if until_day < since_day:
         until_day = since_day
+    return f'{{"since":"{since_day}","until":"{until_day}"}}'
 
+
+def fetch_d2c_meta_metrics(ad_account_id: str, access_token: str, since: datetime, until: datetime) -> dict:
     url = f"https://graph.facebook.com/{GRAPH_API_VERSION}/act_{ad_account_id}/insights"
     params = {
         "fields": ",".join(D2C_META_FIELDS),
-        "time_range": f'{{"since":"{since_day}","until":"{until_day}"}}',
+        "time_range": meta_time_range(since, until),
         "access_token": access_token,
     }
     response = requests.get(url, params=params, timeout=30)
@@ -265,11 +266,11 @@ def _first_roas(*roas_lists):
     return None
 
 
-def fetch_account_insights(ad_account_id: str, access_token: str, date_preset: str) -> dict:
+def fetch_account_insights(ad_account_id: str, access_token: str, since: datetime, until: datetime) -> dict:
     url = f"https://graph.facebook.com/{GRAPH_API_VERSION}/act_{ad_account_id}/insights"
     params = {
         "fields": ",".join(INSIGHTS_FIELDS),
-        "date_preset": date_preset,
+        "time_range": meta_time_range(since, until),
         "access_token": access_token,
     }
     response = requests.get(url, params=params, timeout=30)
@@ -334,10 +335,10 @@ def main():
         rows = [SHEET_HEADER]
 
         for channel, ad_account_id in channels.items():
-            for period_label, date_preset, sort_order in PERIODS:
+            for period_label, since, until, sort_order in period_bounds():
                 print(f"Çekiliyor: {brand} / {channel} / {period_label} ({ad_account_id})...")
                 try:
-                    metrics = fetch_account_insights(ad_account_id, access_token, date_preset)
+                    metrics = fetch_account_insights(ad_account_id, access_token, since, until)
                 except requests.HTTPError as exc:
                     print(f"  HATA: {exc.response.text}", file=sys.stderr)
                     continue
@@ -390,7 +391,7 @@ def resolve_d2c_meta_token(brand: str, ad_account_id: str) -> str:
 def sync_d2c(spreadsheet, now_str: str) -> None:
     worksheet = get_or_create_worksheet(spreadsheet, "D2C", header=D2C_SHEET_HEADER)
     rows = [D2C_SHEET_HEADER]
-    periods = d2c_period_bounds()
+    periods = period_bounds()
 
     for brand, ad_account_id in D2C_META_ACCOUNTS.items():
         access_token = resolve_d2c_meta_token(brand, ad_account_id)
