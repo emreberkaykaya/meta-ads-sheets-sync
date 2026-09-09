@@ -105,6 +105,26 @@ body{
 .sum dd small{display:block;margin-top:4px;font-family:"IBM Plex Sans",sans-serif;
   font-size:11.5px;font-weight:400;letter-spacing:0;color:var(--muted)}
 
+/* ---- Trendyol kartları: marka başına gauge'lı ROAS ---- */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--bc);
+  border-radius:12px;box-shadow:var(--shadow);padding:16px 20px 18px;
+  display:flex;flex-direction:column;gap:12px}
+.card-name{font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-.018em}
+.gauge-row{display:flex;align-items:center;gap:14px}
+.gauge{width:112px;height:66px;flex:none}
+.gauge-txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.card-roas{font-family:Archivo,sans-serif;font-weight:700;font-size:38px;line-height:1;
+  letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--bc)}
+.card-sub{font-size:11.5px;color:var(--muted);line-height:1.4}
+.card-kv{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0;
+  padding-top:12px;border-top:1px solid var(--line-soft)}
+.card-kv > div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.card-kv dt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.card-kv dd{margin:0;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:14px;font-weight:500}
+
 /* ---- hesap blokları: her hesap tek başına, alt alta ---- */
 .accts{display:flex;flex-direction:column;gap:14px}
 .acct{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--bc);
@@ -193,7 +213,9 @@ td .c{color:var(--muted);font-size:12px}
 
 @media (max-width:760px){
   .summary{grid-template-columns:repeat(2,1fr)}
+  .cards{grid-template-columns:1fr}
   .kv{grid-template-columns:repeat(2,1fr)}
+  .card-roas{font-size:32px}
   .acct-roas b{font-size:26px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -220,10 +242,10 @@ td .c{color:var(--muted);font-size:12px}
   <div id="view-cpas">
 
   <section class="sec">
-    <h2>1 · Genel durum</h2>
-    <p>Seçili dönemde altı CPAS hesabının toplamı. ROAS burada toplam ciro ÷ toplam harcama.</p>
+    <h2>1 · Trendyol</h2>
+    <p>Marka başına Trendyol CPAS ROAS'ı. Yarım daire 0–5× ölçek, çentik <b>1,00×</b> başabaş.</p>
   </section>
-  <dl class="summary" id="sum"></dl>
+  <div class="cards" id="ty-cards"></div>
 
   <section class="sec">
     <h2>2 · Hesaplar tek tek</h2>
@@ -400,6 +422,53 @@ const step = (k, v, rate) => `
     <span class="step-v">${v}</span>
     <span class="step-r">${rate}</span>
   </li>`;
+
+/* ---- gauge: yarım daire, 0–5× ölçek, 1,0× başabaş çentiği ---- */
+const ROAS_MAX = 5;
+
+function gauge(roas){
+  const cx = 66, cy = 68, r = 52, sw = 13;
+  const pt = (rad, deg) => {
+    const a = deg * Math.PI / 180;
+    return [cx + rad * Math.cos(a), cy + rad * Math.sin(a)];
+  };
+  const arc = (from, to, color, width) => {
+    const [x0, y0] = pt(r, from), [x1, y1] = pt(r, to);
+    return `<path d="M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}" fill="none"
+            stroke="${color}" stroke-width="${width}" stroke-linecap="round"></path>`;
+  };
+  const f = Math.min(roas, ROAS_MAX) / ROAS_MAX;
+  let s = arc(180, 360, "var(--track)", sw);
+  if (f > 0.004) s += arc(180, 180 + f * 180, `var(--${band(roas)})`, sw);
+  const bDeg = 180 + (1 / ROAS_MAX) * 180;
+  const [bx0, by0] = pt(r - sw / 2 - 3, bDeg), [bx1, by1] = pt(r + sw / 2 + 3, bDeg);
+  s += `<line x1="${bx0}" y1="${by0}" x2="${bx1}" y2="${by1}" stroke="var(--ink-2)" stroke-width="1.6" opacity=".6"></line>`;
+  s += `<text class="n" x="${bx1 - 1}" y="${by1 - 6}" font-size="9" fill="var(--muted)" text-anchor="middle">1,0</text>`;
+  s += `<text class="n" x="12" y="77" font-size="9" fill="var(--muted)">0</text>`;
+  s += `<text class="n" x="120" y="77" font-size="9" fill="var(--muted)" text-anchor="end">5</text>`;
+  return s;
+}
+
+// Trendyol kartı: sayfanın en üstünde, marka başına tek bakışta ROAS.
+function tyCard(r){
+  const b = band(r.roas);
+  return `
+  <article class="card" style="--bc:var(--${b})">
+    <span class="card-name">${esc(r.brand)}</span>
+    <div class="gauge-row">
+      <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas)}</svg>
+      <div class="gauge-txt">
+        <span class="card-roas">${roasFmt(r.roas)}</span>
+        <span class="card-sub">₺1 harcamaya ₺${tl2.format(r.roas)} ciro</span>
+      </div>
+    </div>
+    <dl class="card-kv">
+      <div><dt>Harcama</dt><dd>${money(r.spend)}</dd></div>
+      <div><dt>Ciro</dt><dd>${money(r.value)}</dd></div>
+      <div><dt>Satış</dt><dd>${n(r.purchases)}</dd></div>
+    </dl>
+  </article>`;
+}
 
 /* ---------------- CPAS hesap bloğu ---------------- */
 function acctBlock(r, totalSpend){
@@ -591,12 +660,12 @@ function render(){
   const tPur   = sum(rows, r => r.purchases);
   const tRoas  = tSpend ? tValue / tSpend : 0;
 
-  document.getElementById("sum").innerHTML = summaryStrip([
-    {k:"Toplam harcama", v:money(tSpend), note:`${rows.length} hesap`},
-    {k:"Toplam ciro", v:money(tValue)},
-    {k:"ROAS", v:roasFmt(tRoas), color:band(tRoas), note:`₺1 harcamaya ₺${tl2.format(tRoas)}`},
-    {k:"Satış", v:n(tPur), note:tPur ? "satış başına " + money(tSpend / tPur) : "satış yok"}
-  ]);
+  // Sayfanın girişi Trendyol — cironun büyük kısmı orada, o yüzden en üstte
+  // marka marka duruyor. Hepsiburada dahil hepsi 2. bölümde tek tek zaten var.
+  document.getElementById("ty-cards").innerHTML = rows
+    .filter(r => r.channel === "Trendyol")
+    .sort((a, b) => a.brand.localeCompare(b.brand, "tr"))
+    .map(tyCard).join("");
 
   document.getElementById("accts").innerHTML = rows.map(r => acctBlock(r, tSpend)).join("");
 
