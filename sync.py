@@ -146,11 +146,27 @@ def period_bounds():
     prev_month_end = month_start
     prev_month_start = (month_start - timedelta(days=1)).replace(day=1)
 
+    # Karşılaştırma dönemleri: her görünür dönemin hemen öncesindeki eşit
+    # uzunlukta aralık. Sıra numaraları 10+ — panel bunları düğme olarak
+    # göstermiyor, yalnızca "önceki döneme göre ne oldu" farkını hesaplarken
+    # kullanıyor. Eşleşme kuralı basit: karşılaştırma sırası = dönem + 10.
+    prev_day_start = yesterday_start - timedelta(days=1)
+    prev_week_start = week_start - timedelta(days=7)
+    prev_prev_month_start = (prev_month_start - timedelta(days=1)).replace(day=1)
+    # "Bu Ay" ayın geçen kısmı olduğu için karşılığı geçen ayın aynı gün
+    # sayısı; aylar eşit uzunlukta olmadığından geçen ayın sonunu aşmıyor.
+    elapsed = today_start - month_start
+    prev_month_same = min(prev_month_start + elapsed, prev_month_end)
+
     return [
         ("Dün", yesterday_start, today_start, 1),
         ("Son 7 Gün", week_start, today_start, 2),
         ("Bu Ay", month_start, today_start, 3),
         ("Geçen Ay", prev_month_start, prev_month_end, 4),
+        ("Önceki Gün", prev_day_start, yesterday_start, 11),
+        ("Önceki 7 Gün", prev_week_start, week_start, 12),
+        ("Geçen Ay Aynı Aralık", prev_month_start, prev_month_same, 13),
+        ("Önceki Ay", prev_prev_month_start, prev_month_start, 14),
     ]
 
 

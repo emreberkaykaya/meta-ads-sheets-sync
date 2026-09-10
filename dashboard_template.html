@@ -117,6 +117,18 @@ body{
 .card-roas{font-family:Archivo,sans-serif;font-weight:700;font-size:38px;line-height:1;
   letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--bc)}
 .card-sub{font-size:11.5px;color:var(--muted);line-height:1.4}
+
+/* ---- önceki döneme göre fark ---- */
+.dl{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
+  font-size:11px;font-weight:600;white-space:nowrap}
+.dl.up{color:var(--pos)}
+.dl.down{color:var(--crit)}
+.dl.flat{color:var(--muted)}
+.cmp{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+/* .acct-roas span kuralı ROAS etiketini büyütüp seyreltiyor — karşılaştırma
+   metni cümle olduğu için o biçimden muaf (ayrıca CSS büyük harfi "önceki"yi
+   "ÖNCEKI" yapıyordu, noktalı İ'yi bozuyor). */
+.acct-roas .cmp{text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:400}
 .card-kv{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0;
   padding-top:12px;border-top:1px solid var(--line-soft)}
 .card-kv > div{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -304,7 +316,10 @@ td .c{color:var(--muted);font-size:12px}
        <b>boş gelen satın alma ve ciro sıfır sayılmıştır</b>. ROAS her seviyede önce toplanıp sonra
        bölünür: <b>toplam ciro ÷ toplam harcama</b>, kanal ROAS'larının ortalaması değil.
        Satış, Meta'nın attribution'ına göre <b>reklamın gösterildiği güne</b> yazılır — siparişin
-       düştüğü güne değil.</p>
+       düştüğü güne değil. Yüzde farklar hep <b>hemen önceki eşit uzunluktaki aralığa</b> göre:
+       Dün → önceki gün, Son 7 Gün → ondan önceki 7 gün, Bu Ay → geçen ayın aynı gün sayısı,
+       Geçen Ay → ondan önceki ay. Harcamadaki fark gri, çünkü artması iyi ya da kötü değil;
+       ciro, satış ve ROAS farkları yönüne göre renklenir.</p>
   </footer>
 
   </div>
@@ -349,7 +364,8 @@ td .c{color:var(--muted);font-size:12px}
        Meta harcaması</b> — Meta'nın kendi attribution'ı değil, çünkü Frime'ın pikseli satın alma
        döndürmüyor. Sipariş <b>siparişin düştüğü güne</b> yazılır, bu yüzden CPAS'taki "Satış" ile
        birebir aynı mantıkta değildir. Shopify oturum (session) verisi bu raporda yok — Shopify'ın
-       <b>read_reports</b> izni ve ayrıca resmi "korumalı veri" onayı gerektiriyor, henüz talep edilmedi.</p>
+       <b>read_reports</b> izni ve ayrıca resmi "korumalı veri" onayı gerektiriyor, henüz talep edilmedi.
+       Yüzde farklar CPAS'taki gibi <b>hemen önceki eşit uzunluktaki aralığa</b> göre hesaplanır.</p>
   </footer>
 
   </div>
@@ -390,6 +406,52 @@ const sum     = (rows, f) => rows.reduce((t, r) => t + f(r), 0);
 const band = r => r < 1 ? "crit" : r < 2 ? "warn" : "pos";
 
 let current = 2;
+
+/* ---------------- önceki döneme göre fark ---------------- */
+// Karşılaştırma satırları D/D2C içinde, sırası = görünür dönem + COMPARE_OFFSET
+// (sync.py'de üretiliyor). Seçici bunları göstermiyor.
+const CMP_LABEL = {
+  1: "önceki güne göre",
+  2: "önceki 7 güne göre",
+  3: "geçen ayın aynı aralığına göre",
+  4: "önceki aya göre"
+};
+
+const cmpNote = () => CMP_LABEL[current] || "";
+
+// Harcamada artış "iyi" değil, o yüzden yön rengi yalnızca signal=true iken
+// veriliyor; harcama farkı nötr gri kalıyor.
+function delta(cur, prev, signal){
+  if (prev === undefined || prev === null) return "";
+  if (!prev) return cur ? `<span class="dl flat">yeni</span>` : "";
+  const p = (cur - prev) / prev * 100;
+  const up = p > 0.5, down = p < -0.5;
+  const cls = !signal ? "flat" : up ? "up" : down ? "down" : "flat";
+  const sign = up ? "▲" : down ? "▼" : "•";
+  return `<span class="dl ${cls}">${sign} ${pct(Math.abs(p))}</span>`;
+}
+
+// Aynı hesabın bir önceki dönemdeki satırı; yoksa undefined.
+const prevRec = r =>
+  recs.find(z => z.brand === r.brand && z.channel === r.channel &&
+                 z.period === current + COMPARE_OFFSET);
+const prevD2C = r =>
+  d2cRecs.find(z => z.brand === r.brand && z.period === current + COMPARE_OFFSET);
+
+// Başlıklardaki karşılaştırma cümlesi. Önceki dönemde hiç veri yoksa yüzde
+// hesaplanamaz, o yüzden "önceki 7 güne göre yeni" gibi bozuk bir cümle
+// kurmak yerine tek parça bir ifade dönüyor.
+function cmpLine(cur, prev, signal){
+  if (prev === undefined || prev === null) return "";
+  if (!prev) return cur ? `<span class="cmp"><span class="dl flat">önceki dönemde yoktu</span></span>` : "";
+  return `<span class="cmp">${delta(cur, prev, signal)} ${cmpNote()}</span>`;
+}
+
+// "· fark" ekini yalnızca karşılaştırma satırı varsa ekler.
+const withDelta = (text, cur, prev, signal) => {
+  const d = prev === undefined ? "" : delta(cur, prev, signal);
+  return d ? `${text} · ${d}` : text;
+};
 
 /* ---------------- ortak parçalar ---------------- */
 
@@ -451,7 +513,8 @@ function gauge(roas){
 
 // Trendyol kartı: sayfanın en üstünde, marka başına tek bakışta ROAS.
 function tyCard(r){
-  const b = band(r.roas);
+  const b = band(r.roas), p = prevRec(r);
+  const cmp = p ? cmpLine(r.roas, p.roas, true) : "";
   return `
   <article class="card" style="--bc:var(--${b})">
     <span class="card-name">${esc(r.brand)}</span>
@@ -459,7 +522,7 @@ function tyCard(r){
       <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas)}</svg>
       <div class="gauge-txt">
         <span class="card-roas">${roasFmt(r.roas)}</span>
-        <span class="card-sub">₺1 harcamaya ₺${tl2.format(r.roas)} ciro</span>
+        ${cmp || `<span class="card-sub">₺1 harcamaya ₺${tl2.format(r.roas)} ciro</span>`}
       </div>
     </div>
     <dl class="card-kv">
@@ -478,6 +541,7 @@ function acctBlock(r, totalSpend){
   const atcRate  = r.views ? r.atc / r.views * 100 : 0;
   const buyRate  = r.atc ? r.purchases / r.atc * 100 : 0;
   const cpa      = r.purchases ? r.spend / r.purchases : 0;
+  const p        = prevRec(r);
 
   return `
   <article class="acct" style="--bc:var(--${b})">
@@ -486,14 +550,19 @@ function acctBlock(r, totalSpend){
         <span class="acct-name">${esc(r.brand)}</span>
         <span class="chip">${esc(r.channel)}</span>
       </div>
-      <div class="acct-roas"><b>${roasFmt(r.roas)}</b><span>ROAS</span></div>
+      <div class="acct-roas">${
+        p ? cmpLine(r.roas, p.roas, true) : ""
+      }<b>${roasFmt(r.roas)}</b><span>ROAS</span></div>
     </div>
     <div class="acct-body">
       <dl class="kv">
-        <div><dt>Harcama</dt><dd>${money(r.spend)}<small>toplam harcamanın ${pct(share)}'i</small></dd></div>
-        <div><dt>Ciro</dt><dd>${money(r.value)}<small>₺1 harcamaya ₺${tl2.format(r.roas)}</small></dd></div>
+        <div><dt>Harcama</dt><dd>${money(r.spend)}<small>${
+          withDelta(`toplam harcamada pay ${pct(share)}`, r.spend, p && p.spend, false)}</small></dd></div>
+        <div><dt>Ciro</dt><dd>${money(r.value)}<small>${
+          withDelta(`₺1 harcamaya ₺${tl2.format(r.roas)}`, r.value, p && p.value, true)}</small></dd></div>
         <div><dt>Satış</dt><dd>${n(r.purchases)}<small>${
-          r.purchases ? "satış başına " + money(cpa) : "bu dönem satış yok"}</small></dd></div>
+          withDelta(r.purchases ? "satış başına " + money(cpa) : "bu dönem satış yok",
+                    r.purchases, p && p.purchases, true)}</small></dd></div>
         <div><dt>Tıklama</dt><dd>${n(r.clicks)}</dd></div>
       </dl>
       <div class="duo">
@@ -518,6 +587,7 @@ function d2cBlock(r, totalSpend){
   const ctr   = r.impressions ? r.clicks / r.impressions * 100 : 0;
   const cvr   = r.clicks ? r.orders / r.clicks * 100 : 0;
   const aov   = r.orders ? r.revenue / r.orders : 0;
+  const p     = prevD2C(r);
 
   return `
   <article class="acct" style="--bc:var(--${b})">
@@ -526,14 +596,19 @@ function d2cBlock(r, totalSpend){
         <span class="acct-name">${esc(r.brand)}</span>
         <span class="chip">Kendi sitesi</span>
       </div>
-      <div class="acct-roas"><b>${roasFmt(r.roas)}</b><span>ROAS</span></div>
+      <div class="acct-roas">${
+        p ? cmpLine(r.roas, p.roas, true) : ""
+      }<b>${roasFmt(r.roas)}</b><span>ROAS</span></div>
     </div>
     <div class="acct-body">
       <dl class="kv">
-        <div><dt>Harcama</dt><dd>${money(r.spend)}<small>toplam harcamanın ${pct(share)}'i</small></dd></div>
-        <div><dt>Shopify cirosu</dt><dd>${money(r.revenue)}<small>₺1 harcamaya ₺${tl2.format(r.roas)}</small></dd></div>
+        <div><dt>Harcama</dt><dd>${money(r.spend)}<small>${
+          withDelta(`toplam harcamada pay ${pct(share)}`, r.spend, p && p.spend, false)}</small></dd></div>
+        <div><dt>Shopify cirosu</dt><dd>${money(r.revenue)}<small>${
+          withDelta(`₺1 harcamaya ₺${tl2.format(r.roas)}`, r.revenue, p && p.revenue, true)}</small></dd></div>
         <div><dt>Sipariş</dt><dd>${n(r.orders)}<small>${
-          r.orders ? "sepet ortalaması " + money(aov) : "bu dönem sipariş yok"}</small></dd></div>
+          withDelta(r.orders ? "sepet ortalaması " + money(aov) : "bu dönem sipariş yok",
+                    r.orders, p && p.orders, true)}</small></dd></div>
         <div><dt>Erişim</dt><dd>${n(r.reach)}<small>kişi başı ${tl2.format(freq)} gösterim</small></dd></div>
       </dl>
       <div class="duo">

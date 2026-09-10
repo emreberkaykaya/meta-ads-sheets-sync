@@ -39,6 +39,9 @@ D2C_COL = {
     "clicks": 5, "spend": 6, "revenue": 7, "orders": 8, "updated": 9,
 }
 
+# sync.py'deki karşılaştırma dönemi sıra numarası kaydırması
+COMPARE_OFFSET = 10
+
 AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
          "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
 
@@ -152,14 +155,17 @@ def main():
     synced = date(int(m.group(1)), int(m.group(2)), int(m.group(3))) if m else date.today()
     ranges = period_ranges(synced - timedelta(days=1))
 
+    # 10 ve üzeri sıra numaraları karşılaştırma dönemleri (sync.py'ye bak):
+    # satırları D/D2C içinde duruyor ama dönem seçicide düğme olarak çıkmıyor.
     periods = [
         {"id": o, "label": labels[o], "range": ranges.get(labels[o], "")}
-        for o in sorted(labels)
+        for o in sorted(labels) if o < COMPARE_OFFSET
     ]
 
     data_block = (
         f"const UPDATED = {json.dumps(updated)};\n"
         f"const PERIODS = {json.dumps(periods, ensure_ascii=False)};\n"
+        f"const COMPARE_OFFSET = {COMPARE_OFFSET};\n"
         f"const D = {json.dumps(rows, ensure_ascii=False)};\n"
         f"const D2C = {json.dumps(d2c_rows, ensure_ascii=False)};"
     )
