@@ -63,7 +63,11 @@ BRAND_TOKEN_ENV_VAR = {
 # bugünü de (yarım günü) kapsarken Shopify tarafı bugünü dışarıda bırakıyordu;
 # bu da CPAS ile D2C sekmelerinin aynı "Bu Ay" etiketi altında farklı tarih
 # aralıkları göstermesine yol açıyordu. Artık iki taraf da aynı sınırları
-# kullanıyor: her dönem dünün sonunda biter, bugünün yarım verisi hiç girmez.
+# kullanıyor. Dün / Son 7 Gün / Geçen Ay dünün sonunda biter. Tek istisna
+# "Bu Ay": ay başından bugün dahil olmak üzere MTD çekiliyor — ama iki taraf
+# için de aynı şekilde, yani eski hata (Meta bugünü sayarken Shopify saymıyor)
+# geri gelmiyor. Bugünün verisi yarım olduğu için Bu Ay rakamları gün içinde
+# değişir; Meta harcaması Shopify cirosunun biraz gerisinden gelebilir.
 #
 # "Bu Ay" ve "Geçen Ay" birbirini kapsamayan ayrı takvim aralıkları olduğu
 # için (nested değiller), metrik büyüklüğüne göre sıralamak kronolojik
@@ -140,6 +144,7 @@ def period_bounds():
     [(label, since, until, sort_order), ...] — `since` dahil, `until` hariç."""
     now_ist = datetime.now(ISTANBUL)
     today_start = now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+    tomorrow_start = today_start + timedelta(days=1)
     yesterday_start = today_start - timedelta(days=1)
     week_start = today_start - timedelta(days=7)
     month_start = today_start.replace(day=1)
@@ -153,15 +158,15 @@ def period_bounds():
     prev_day_start = yesterday_start - timedelta(days=1)
     prev_week_start = week_start - timedelta(days=7)
     prev_prev_month_start = (prev_month_start - timedelta(days=1)).replace(day=1)
-    # "Bu Ay" ayın geçen kısmı olduğu için karşılığı geçen ayın aynı gün
-    # sayısı; aylar eşit uzunlukta olmadığından geçen ayın sonunu aşmıyor.
-    elapsed = today_start - month_start
+    # "Bu Ay" MTD: bugün dahil. Karşılaştırması da geçen ayın aynı gün
+    # sayısı (bugünün karşılığı dahil), geçen ayın sonunu aşmadan.
+    elapsed = tomorrow_start - month_start
     prev_month_same = min(prev_month_start + elapsed, prev_month_end)
 
     return [
         ("Dün", yesterday_start, today_start, 1),
         ("Son 7 Gün", week_start, today_start, 2),
-        ("Bu Ay", month_start, today_start, 3),
+        ("Bu Ay", month_start, tomorrow_start, 3),
         ("Geçen Ay", prev_month_start, prev_month_end, 4),
         ("Önceki Gün", prev_day_start, yesterday_start, 11),
         ("Önceki 7 Gün", prev_week_start, week_start, 12),

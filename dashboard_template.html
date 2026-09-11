@@ -93,18 +93,6 @@ body{
 .sec h2{margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:19px;letter-spacing:-.022em}
 .sec p{margin:0;font-size:12.5px;color:var(--muted);max-width:70ch}
 
-/* ---- özet şeridi ---- */
-.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:0;
-  background:var(--line-soft);border:1px solid var(--line);border-radius:12px;
-  overflow:hidden;box-shadow:var(--shadow)}
-.sum{background:var(--surface);padding:16px 20px 18px;display:flex;flex-direction:column;gap:5px}
-.sum dt{font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:500;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.sum dd{margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:27px;line-height:1.05;
-  letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.sum dd small{display:block;margin-top:4px;font-family:"IBM Plex Sans",sans-serif;
-  font-size:11.5px;font-weight:400;letter-spacing:0;color:var(--muted)}
-
 /* ---- Trendyol kartları: marka başına gauge'lı ROAS ---- */
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .card{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--bc);
@@ -224,7 +212,6 @@ td .c{color:var(--muted);font-size:12px}
 .notes b{color:var(--ink-2);font-weight:600}
 
 @media (max-width:760px){
-  .summary{grid-template-columns:repeat(2,1fr)}
   .cards{grid-template-columns:1fr}
   .kv{grid-template-columns:repeat(2,1fr)}
   .card-roas{font-size:32px}
@@ -255,14 +242,15 @@ td .c{color:var(--muted);font-size:12px}
 
   <section class="sec">
     <h2>1 · Trendyol</h2>
-    <p>Marka başına Trendyol CPAS ROAS'ı. Yarım daire 0–5× ölçek, çentik <b>1,00×</b> başabaş.</p>
+    <p>Marka başına Trendyol CPAS ROAS'ı. Yarım dairedeki çentik o markanın
+       <b>başabaş ROAS'ı</b> — altı zarar, üstü kâr.</p>
   </section>
   <div class="cards" id="ty-cards"></div>
 
   <section class="sec">
     <h2>2 · Hesaplar tek tek</h2>
     <p>Her marka–pazaryeri hesabı kendi bloğunda, harcaması en yüksek olandan başlayarak.
-       Renk: <b>1,00×</b> altı zarar, <b>1,00–2,00×</b> ince, <b>2,00×</b> üstü kârlı.</p>
+       Renk markanın başabaş ROAS'ına göre: <span id="band-note"></span></p>
   </section>
   <div class="accts" id="accts"></div>
 
@@ -286,7 +274,7 @@ td .c{color:var(--muted);font-size:12px}
   <section class="panel">
     <div class="panel-head">
       <h3>Dönemler arası ROAS</h3>
-      <span class="legend"><span>seçili dönem vurgulu · yatay çizgi başabaş</span></span>
+      <span class="legend"><span>seçili dönem vurgulu · kesikli çizgi o markanın başabaşı</span></span>
     </div>
     <div class="chart-scroll"><svg id="period-chart" role="img" aria-label="Marka ve döneme göre ROAS"></svg></div>
   </section>
@@ -311,15 +299,20 @@ td .c{color:var(--muted);font-size:12px}
 
   <footer class="notes">
     <p>Meta <b>catalog_segment</b> alanları — yalnızca pazaryeriyle paylaşılan katalog kalemleri.
-       <b>Bu Ay</b> ayın geçen kısmıdır, tam ay değildir; her dönem dünün sonunda biter, bugünün
-       yarım verisi girmez. Meta sıfır değerli metrikleri yanıtta hiç döndürmediği için
+       <b>Bu Ay</b> ay başından bugüne (MTD) — tam ay değildir ve <b>bugünü de kapsar</b>, bu yüzden
+       gün içinde değişir; bugünün Meta harcaması henüz tam raporlanmamış olabilir. Diğer dönemler
+       dünün sonunda biter. Meta sıfır değerli metrikleri yanıtta hiç döndürmediği için
        <b>boş gelen satın alma ve ciro sıfır sayılmıştır</b>. ROAS her seviyede önce toplanıp sonra
        bölünür: <b>toplam ciro ÷ toplam harcama</b>, kanal ROAS'larının ortalaması değil.
        Satış, Meta'nın attribution'ına göre <b>reklamın gösterildiği güne</b> yazılır — siparişin
        düştüğü güne değil. Yüzde farklar hep <b>hemen önceki eşit uzunluktaki aralığa</b> göre:
        Dün → önceki gün, Son 7 Gün → ondan önceki 7 gün, Bu Ay → geçen ayın aynı gün sayısı,
        Geçen Ay → ondan önceki ay. Harcamadaki fark gri, çünkü artması iyi ya da kötü değil;
-       ciro, satış ve ROAS farkları yönüne göre renklenir.</p>
+       ciro, satış ve ROAS farkları yönüne göre renklenir. Başabaş ROAS
+       <b>marjlar.json</b>'daki katkı marjından geliyor (başabaş = 1 ÷ marj);
+       marj girilmemiş markada ciro brüt kabul edilip başabaş <b>1,00×</b> alınır.
+       "Kârlı" eşiği başabaşın iki katı — reklam harcaması katkı marjının en
+       fazla yarısını yediğinde.</p>
   </footer>
 
   </div>
@@ -327,15 +320,15 @@ td .c{color:var(--muted);font-size:12px}
   <div id="view-d2c" hidden>
 
   <section class="sec">
-    <h2>1 · Genel durum</h2>
-    <p>Seçili dönemde markaların kendi sitelerine giden reklamların toplamı.
-       ROAS = Shopify cirosu ÷ Meta harcaması.</p>
+    <h2>1 · Markalar</h2>
+    <p>Marka başına ROAS = Shopify cirosu ÷ Meta harcaması. Yarım dairedeki
+       çentik başabaş. Toplamlar en alttaki tablonun Toplam satırında.</p>
   </section>
-  <dl class="summary" id="d2c-sum"></dl>
+  <div class="cards" id="d2c-cards"></div>
 
   <section class="sec">
-    <h2>2 · Markalar tek tek</h2>
-    <p>Her marka kendi bloğunda, harcaması en yüksek olandan başlayarak.</p>
+    <h2>2 · Marka detayı</h2>
+    <p>Her markanın harcama/ciro dengesi ve gösterim → tıklama → sipariş hunisi.</p>
   </section>
   <div class="accts" id="d2c-accts"></div>
 
@@ -365,7 +358,9 @@ td .c{color:var(--muted);font-size:12px}
        döndürmüyor. Sipariş <b>siparişin düştüğü güne</b> yazılır, bu yüzden CPAS'taki "Satış" ile
        birebir aynı mantıkta değildir. Shopify oturum (session) verisi bu raporda yok — Shopify'ın
        <b>read_reports</b> izni ve ayrıca resmi "korumalı veri" onayı gerektiriyor, henüz talep edilmedi.
-       Yüzde farklar CPAS'taki gibi <b>hemen önceki eşit uzunluktaki aralığa</b> göre hesaplanır.</p>
+       Yüzde farklar CPAS'taki gibi <b>hemen önceki eşit uzunluktaki aralığa</b> göre hesaplanır.
+       <b>Bu Ay</b> Shopify tarafında da MTD'dir: ay başından bugün dahil, Meta harcamasıyla aynı
+       pencere. Sipariş sayısı sıfırken ROAS hesaplanamadığı için <b>—</b> gösterilir.</p>
   </footer>
 
   </div>
@@ -403,7 +398,28 @@ const roasFmt = v => tl2.format(v) + "×";
 const esc     = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
 const sum     = (rows, f) => rows.reduce((t, r) => t + f(r), 0);
 
-const band = r => r < 1 ? "crit" : r < 2 ? "warn" : "pos";
+// Başabaş ROAS marka bazında: marjlar.json'a katkı marjı girildiyse
+// 1/marj, girilmediyse 1,00× (ciro brüt kabul edilir). "Kârlı" eşiği
+// başabaşın iki katı — yani reklam harcaması katkı marjının en fazla
+// yarısını yiyor. Marka verilmeyen yerler (kanal toplamı, genel toplam)
+// varsayılan başabaşı kullanır.
+const beOf = brand => (brand && BREAK_EVEN[brand]) || BREAK_EVEN._default;
+
+function band(roas, brand, spend){
+  // Hiç harcama yoksa ortada kâr-zarar da yok; kırmızı göstermek yanıltıcı.
+  if (spend === 0) return "neutral-bar";
+  const be = beOf(brand);
+  return roas < be ? "crit" : roas < be * 2 ? "warn" : "pos";
+}
+
+// Satış yokken "0,00×" yazmak ölçüm bozukmuş gibi duruyor. Gerçekten sıfır
+// satış olduğunu tire + açıklama ile söylüyoruz.
+const roasTxt = (roas, sales) => sales > 0 ? roasFmt(roas) : "—";
+
+// Gauge ve dönem grafiği ölçeği başabaşa göre büyür; aksi halde yüksek
+// başabaşlı bir markada bütün çubuklar ölçeğin dibinde sıkışıyor.
+const scaleFor = be => Math.max(5, Math.ceil(be * 2.5));
+const MAX_BE = Math.max(...Object.values(BREAK_EVEN));
 
 let current = 2;
 
@@ -455,16 +471,6 @@ const withDelta = (text, cur, prev, signal) => {
 
 /* ---------------- ortak parçalar ---------------- */
 
-// Özet şeridi: dört büyük sayı, hepsi aynı dönemin toplamı.
-function summaryStrip(items){
-  return items.map(it => `
-    <div class="sum">
-      <dt>${it.k}</dt>
-      <dd style="${it.color ? `color:var(--${it.color})` : ""}">${it.v}${
-        it.note ? `<small>${it.note}</small>` : ""}</dd>
-    </div>`).join("");
-}
-
 // İki çubuk hesabın kendi içinde ölçekleniyor — hesaplar arası kıyas için
 // "toplam harcamanın %x'i" satırı var, çubuklar o işi yapmıyor. Küçük hesabın
 // çubuğu böylece görünmez olmuyor.
@@ -486,9 +492,8 @@ const step = (k, v, rate) => `
   </li>`;
 
 /* ---- gauge: yarım daire, 0–5× ölçek, 1,0× başabaş çentiği ---- */
-const ROAS_MAX = 5;
-
-function gauge(roas){
+function gauge(roas, brand){
+  const be = beOf(brand), ROAS_MAX = scaleFor(be);
   const cx = 66, cy = 68, r = 52, sw = 13;
   const pt = (rad, deg) => {
     const a = deg * Math.PI / 180;
@@ -501,27 +506,29 @@ function gauge(roas){
   };
   const f = Math.min(roas, ROAS_MAX) / ROAS_MAX;
   let s = arc(180, 360, "var(--track)", sw);
-  if (f > 0.004) s += arc(180, 180 + f * 180, `var(--${band(roas)})`, sw);
-  const bDeg = 180 + (1 / ROAS_MAX) * 180;
+  if (f > 0.004) s += arc(180, 180 + f * 180, `var(--${band(roas, brand)})`, sw);
+  const bDeg = 180 + (be / ROAS_MAX) * 180;
   const [bx0, by0] = pt(r - sw / 2 - 3, bDeg), [bx1, by1] = pt(r + sw / 2 + 3, bDeg);
   s += `<line x1="${bx0}" y1="${by0}" x2="${bx1}" y2="${by1}" stroke="var(--ink-2)" stroke-width="1.6" opacity=".6"></line>`;
-  s += `<text class="n" x="${bx1 - 1}" y="${by1 - 6}" font-size="9" fill="var(--muted)" text-anchor="middle">1,0</text>`;
+  s += `<text class="n" x="${bx1 - 1}" y="${by1 - 6}" font-size="9" fill="var(--muted)" text-anchor="middle">${tl2.format(be)}</text>`;
   s += `<text class="n" x="12" y="77" font-size="9" fill="var(--muted)">0</text>`;
-  s += `<text class="n" x="120" y="77" font-size="9" fill="var(--muted)" text-anchor="end">5</text>`;
+  s += `<text class="n" x="120" y="77" font-size="9" fill="var(--muted)" text-anchor="end">${ROAS_MAX}</text>`;
   return s;
 }
 
 // Trendyol kartı: sayfanın en üstünde, marka başına tek bakışta ROAS.
 function tyCard(r){
-  const b = band(r.roas), p = prevRec(r);
-  const cmp = p ? cmpLine(r.roas, p.roas, true) : "";
+  const b = band(r.roas, r.brand, r.spend), p = prevRec(r);
+  const cmp = r.purchases
+    ? (p ? cmpLine(r.roas, p.roas, true) : "")
+    : `<span class="card-sub">${r.spend ? "harcama var, satış yok" : "bu dönem reklam yok"}</span>`;
   return `
   <article class="card" style="--bc:var(--${b})">
     <span class="card-name">${esc(r.brand)}</span>
     <div class="gauge-row">
-      <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas)}</svg>
+      <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas, r.brand)}</svg>
       <div class="gauge-txt">
-        <span class="card-roas">${roasFmt(r.roas)}</span>
+        <span class="card-roas">${roasTxt(r.roas, r.purchases)}</span>
         ${cmp || `<span class="card-sub">₺1 harcamaya ₺${tl2.format(r.roas)} ciro</span>`}
       </div>
     </div>
@@ -535,7 +542,7 @@ function tyCard(r){
 
 /* ---------------- CPAS hesap bloğu ---------------- */
 function acctBlock(r, totalSpend){
-  const b = band(r.roas);
+  const b = band(r.roas, r.brand, r.spend);
   const max = Math.max(r.spend, r.value) || 1;
   const share    = totalSpend ? r.spend / totalSpend * 100 : 0;
   const atcRate  = r.views ? r.atc / r.views * 100 : 0;
@@ -551,8 +558,9 @@ function acctBlock(r, totalSpend){
         <span class="chip">${esc(r.channel)}</span>
       </div>
       <div class="acct-roas">${
-        p ? cmpLine(r.roas, p.roas, true) : ""
-      }<b>${roasFmt(r.roas)}</b><span>ROAS</span></div>
+        r.purchases ? (p ? cmpLine(r.roas, p.roas, true) : "")
+                    : `<span class="cmp">${r.spend ? "harcama var, satış yok" : "bu dönem reklam yok"}</span>`
+      }<b>${roasTxt(r.roas, r.purchases)}</b><span>ROAS</span></div>
     </div>
     <div class="acct-body">
       <dl class="kv">
@@ -578,9 +586,34 @@ function acctBlock(r, totalSpend){
   </article>`;
 }
 
+// D2C kartı: CPAS'taki Trendyol kartının Shopify karşılığı — markalar
+// birleştirilmiyor, her biri kendi ROAS'ıyla duruyor.
+function d2cCard(r){
+  const b = band(r.roas, r.brand, r.spend), p = prevD2C(r);
+  const cmp = r.orders
+    ? (p ? cmpLine(r.roas, p.roas, true) : "")
+    : `<span class="card-sub">${r.spend ? "harcama var, Shopify'da sipariş yok" : "bu dönem reklam yok"}</span>`;
+  return `
+  <article class="card" style="--bc:var(--${b})">
+    <span class="card-name">${esc(r.brand)}</span>
+    <div class="gauge-row">
+      <svg class="gauge" viewBox="0 0 132 78" aria-hidden="true">${gauge(r.roas, r.brand)}</svg>
+      <div class="gauge-txt">
+        <span class="card-roas">${roasTxt(r.roas, r.orders)}</span>
+        ${cmp}
+      </div>
+    </div>
+    <dl class="card-kv">
+      <div><dt>Harcama</dt><dd>${money(r.spend)}</dd></div>
+      <div><dt>Ciro</dt><dd>${money(r.revenue)}</dd></div>
+      <div><dt>Sipariş</dt><dd>${n(r.orders)}</dd></div>
+    </dl>
+  </article>`;
+}
+
 /* ---------------- D2C marka bloğu ---------------- */
 function d2cBlock(r, totalSpend){
-  const b = band(r.roas);
+  const b = band(r.roas, r.brand, r.spend);
   const max = Math.max(r.spend, r.revenue) || 1;
   const share = totalSpend ? r.spend / totalSpend * 100 : 0;
   const freq  = r.reach ? r.impressions / r.reach : 0;
@@ -597,8 +630,9 @@ function d2cBlock(r, totalSpend){
         <span class="chip">Kendi sitesi</span>
       </div>
       <div class="acct-roas">${
-        p ? cmpLine(r.roas, p.roas, true) : ""
-      }<b>${roasFmt(r.roas)}</b><span>ROAS</span></div>
+        r.orders ? (p ? cmpLine(r.roas, p.roas, true) : "")
+                 : `<span class="cmp">${r.spend ? "harcama var, Shopify'da sipariş yok" : "bu dönem reklam yok"}</span>`
+      }<b>${roasTxt(r.roas, r.orders)}</b><span>ROAS</span></div>
     </div>
     <div class="acct-body">
       <dl class="kv">
@@ -685,16 +719,17 @@ function vsChart(rows){
 
 /* dönemler arası ROAS: marka başına gruplanmış sütunlar */
 function periodChart(){
-  const X0 = 56, X1 = 968, Y0 = 26, Y1 = 214, MAXR = 5;
+  const X0 = 56, X1 = 968, Y0 = 26, Y1 = 214, MAXR = scaleFor(MAX_BE);
   const H = Y1 + 58;  // dönem etiketi (+16) ve marka adı (+46) için taban payı
   const brands = [...new Set(recs.map(r => r.brand))];
   const y = v => Y1 - Math.min(v, MAXR) / MAXR * (Y1 - Y0);
   let s = "";
 
+  // Başabaş marka bazında değişebildiği için düz bir yatay çizgi yerine her
+  // marka grubunun içine kendi başabaş çizgisi çiziliyor; ızgara sade kalıyor.
   for (let t = 0; t <= MAXR; t++){
-    const be = t === 1, gy = y(t);
-    s += `<line x1="${X0}" y1="${gy}" x2="${X1}" y2="${gy}"
-          stroke="var(--${be ? "ink-2" : "line-soft"})" stroke-width="${be ? 1.4 : 1}" ${be ? 'opacity=".5"' : ""}></line>`;
+    const gy = y(t);
+    s += `<line x1="${X0}" y1="${gy}" x2="${X1}" y2="${gy}" stroke="var(--line-soft)" stroke-width="1"></line>`;
     s += `<text class="n" x="${X0 - 10}" y="${gy + 4}" text-anchor="end" font-size="10.5" fill="var(--muted)">${t}×</text>`;
   }
 
@@ -703,6 +738,12 @@ function periodChart(){
     const gx = X0 + gi * gw;
     if (gi) s += `<line x1="${gx}" y1="${Y0 - 6}" x2="${gx}" y2="${Y1 + 30}" stroke="var(--line-soft)" stroke-width="1"></line>`;
     s += `<text class="brand" x="${gx + gw / 2}" y="${Y1 + 46}" text-anchor="middle" font-size="14" fill="var(--ink)">${esc(brand)}</text>`;
+
+    const be = beOf(brand), bey = y(be);
+    s += `<line x1="${gx + 4}" y1="${bey}" x2="${gx + gw - 4}" y2="${bey}"
+          stroke="var(--ink-2)" stroke-width="1.4" opacity=".5" stroke-dasharray="5 4"></line>`;
+    s += `<text x="${gx + gw - 6}" y="${bey - 5}" text-anchor="end" font-size="9.5"
+          fill="var(--muted)" letter-spacing=".06em">BAŞABAŞ ${tl2.format(be)}×</text>`;
 
     const inner = gw * 0.82, bw = inner / PERIODS.length * 0.72, stepw = inner / PERIODS.length;
     PERIODS.forEach((p, pi) => {
@@ -713,7 +754,7 @@ function periodChart(){
       const bx = gx + gw * 0.09 + pi * stepw + (stepw - bw) / 2;
       const by = y(roas), sel = p.id === current;
       s += `<rect x="${bx}" y="${by}" width="${bw}" height="${Y1 - by}" rx="3"
-            fill="var(--${band(roas)})" opacity="${sel ? 1 : .4}"></rect>`;
+            fill="var(--${band(roas, brand)})" opacity="${sel ? 1 : .4}"></rect>`;
       s += `<text class="n" x="${bx + bw / 2}" y="${by - 6}" text-anchor="middle" font-size="11"
             font-weight="${sel ? 600 : 400}" fill="var(--${sel ? "ink" : "muted"})">${tl2.format(roas)}</text>`;
       s += `<text x="${bx + bw / 2}" y="${Y1 + 16}" text-anchor="middle" font-size="10"
@@ -729,6 +770,14 @@ function render(){
   const rows = recs.filter(r => r.period === current).sort((a, b) => b.spend - a.spend);
   const p = PERIODS.find(x => x.id === current);
   document.getElementById("range").textContent = p.range;
+
+  // Başabaş marka bazında değişebiliyor; açıklamayı tek tek yazıyoruz ki
+  // renklerin hangi eşiğe göre verildiği okunur olsun.
+  const beBrands = [...new Set(recs.map(r => r.brand))]
+    .sort((a, b) => a.localeCompare(b, "tr"))
+    .map(brand => `${esc(brand)} <b>${tl2.format(beOf(brand))}×</b>`);
+  document.getElementById("band-note").innerHTML =
+    beBrands.join(" · ") + " — altı zarar, iki katına kadar ince, üstü kârlı.";
 
   const tSpend = sum(rows, r => r.spend);
   const tValue = sum(rows, r => r.value);
@@ -748,12 +797,12 @@ function render(){
   paint("period-chart", periodChart());
 
   document.getElementById("tbody").innerHTML = rows.map(r => {
-    const b = band(r.roas);
+    const b = band(r.roas, r.brand, r.spend);
     return `<tr>
       <td><span class="b">${esc(r.brand)}</span> <span class="c">${esc(r.channel)}</span></td>
       <td>${money(r.spend)}</td>
       <td>${money(r.value)}</td>
-      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${roasFmt(r.roas)}</span></td>
+      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${roasTxt(r.roas, r.purchases)}</span></td>
       <td>${n(r.purchases)}</td>
       <td>${n(r.atc)}</td>
       <td>${n(r.views)}</td>
@@ -786,17 +835,15 @@ function d2cRender(){
   const tOrd   = sum(rows, r => r.orders);
   const tRoas  = tSpend ? tRev / tSpend : 0;
 
-  document.getElementById("d2c-sum").innerHTML = summaryStrip([
-    {k:"Toplam harcama", v:money(tSpend), note:`${rows.length} marka`},
-    {k:"Shopify cirosu", v:money(tRev)},
-    {k:"ROAS", v:roasFmt(tRoas), color:band(tRoas), note:`₺1 harcamaya ₺${tl2.format(tRoas)}`},
-    {k:"Sipariş", v:n(tOrd), note:tOrd ? "sipariş başına " + money(tSpend / tOrd) : "sipariş yok"}
-  ]);
+  document.getElementById("d2c-cards").innerHTML = rows
+    .slice()
+    .sort((a, b) => a.brand.localeCompare(b.brand, "tr"))
+    .map(d2cCard).join("");
 
   document.getElementById("d2c-accts").innerHTML = rows.map(r => d2cBlock(r, tSpend)).join("");
 
   document.getElementById("d2c-tbody").innerHTML = rows.map(r => {
-    const b = band(r.roas);
+    const b = band(r.roas, r.brand, r.spend);
     return `<tr>
       <td><span class="b">${esc(r.brand)}</span></td>
       <td>${n(r.reach)}</td>
@@ -805,7 +852,7 @@ function d2cRender(){
       <td>${money(r.spend)}</td>
       <td>${money(r.revenue)}</td>
       <td>${n(r.orders)}</td>
-      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${roasFmt(r.roas)}</span></td>
+      <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${roasTxt(r.roas, r.orders)}</span></td>
     </tr>`;
   }).join("");
 

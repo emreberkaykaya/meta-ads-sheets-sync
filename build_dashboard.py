@@ -42,6 +42,36 @@ D2C_COL = {
 # sync.py'deki karşılaştırma dönemi sıra numarası kaydırması
 COMPARE_OFFSET = 10
 
+MARGINS_FILE = os.path.join(HERE, "marjlar.json")
+
+# Marj verilmediğinde panel eski davranışına döner: ciro brüt kabul edilir,
+# başabaş 1,00×. Gerçek katkı marjı girildiğinde başabaş 1/marj'a çıkar.
+DEFAULT_BREAK_EVEN = 1.0
+
+
+def break_even_map() -> dict:
+    """marjlar.json'daki katkı marjlarını başabaş ROAS'a çevirir:
+    başabaş = 1 / marj. Dosya yoksa ya da bozuksa herkes varsayılana düşer."""
+    try:
+        with open(MARGINS_FILE, encoding="utf-8") as fh:
+            cfg = json.load(fh)
+    except (OSError, ValueError):
+        return {"_default": DEFAULT_BREAK_EVEN}
+
+    def to_be(margin):
+        # 0 ve negatif marj başabaşı tanımsız yapar; sessizce varsayılana düşer.
+        if not isinstance(margin, (int, float)) or margin <= 0 or margin > 1:
+            return None
+        return round(1 / margin, 4)
+
+    out = {"_default": to_be(cfg.get("varsayilan")) or DEFAULT_BREAK_EVEN}
+    for brand, margin in (cfg.get("markalar") or {}).items():
+        be = to_be(margin)
+        if be:
+            out[brand] = be
+    return out
+
+
 AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
          "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
 
@@ -50,19 +80,20 @@ def gun(d: date) -> str:
     return f"{d.day} {AYLAR[d.month - 1]} {d.year}"
 
 
-def period_ranges(last_full_day: date) -> dict:
-    """Sheet'teki dönem etiketlerinin hangi takvim aralığına denk geldiğini,
-    verinin bittiği son tam günden geriye doğru hesaplar."""
+def period_ranges(last_full_day: date, mtd_day: date) -> dict:
+    """Sheet'teki dönem etiketlerinin hangi takvim aralığına denk geldiğini
+    hesaplar. Dün / Son 7 Gün / Geçen Ay son tam günde biter; "Bu Ay" ise
+    MTD olduğu için senkron gününü de kapsar (sync.py'deki period_bounds)."""
     d = last_full_day
     week_start = d - timedelta(days=6)
-    month_start = d.replace(day=1)
+    month_start = mtd_day.replace(day=1)
     prev_month_end = month_start - timedelta(days=1)
     prev_month_start = prev_month_end.replace(day=1)
     return {
         "Dün": f"1 gün · {gun(d)}",
         "Son 7 Gün": f"7 gün · {gun(week_start)} – {gun(d)}",
-        "Bu Ay": (f"Ayın geçen kısmı · {gun(month_start)} – {gun(d)}"
-                  if month_start != d else f"Ayın ilk günü · {gun(d)}"),
+        "Bu Ay": (f"Ay başından bugüne (MTD) · {gun(month_start)} – {gun(mtd_day)}"
+                  if month_start != mtd_day else f"Ayın ilk günü · {gun(mtd_day)}"),
         "Geçen Ay": f"Tam ay · {gun(prev_month_start)} – {gun(prev_month_end)}",
     }
 
@@ -149,11 +180,12 @@ def read_sheet():
 
 def main():
     rows, d2c_rows, updated, labels = read_sheet()
+    break_even = break_even_map()
 
     # Veri dünle biter; "dün"ü senkron damgasından türetiyoruz.
     m = re.match(r"(\d{4})-(\d{2})-(\d{2})", updated)
     synced = date(int(m.group(1)), int(m.group(2)), int(m.group(3))) if m else date.today()
-    ranges = period_ranges(synced - timedelta(days=1))
+    ranges = period_ranges(synced - timedelta(days=1), synced)
 
     # 10 ve üzeri sıra numaraları karşılaştırma dönemleri (sync.py'ye bak):
     # satırları D/D2C içinde duruyor ama dönem seçicide düğme olarak çıkmıyor.
@@ -166,6 +198,7 @@ def main():
         f"const UPDATED = {json.dumps(updated)};\n"
         f"const PERIODS = {json.dumps(periods, ensure_ascii=False)};\n"
         f"const COMPARE_OFFSET = {COMPARE_OFFSET};\n"
+        f"const BREAK_EVEN = {json.dumps(break_even, ensure_ascii=False)};\n"
         f"const D = {json.dumps(rows, ensure_ascii=False)};\n"
         f"const D2C = {json.dumps(d2c_rows, ensure_ascii=False)};"
     )
@@ -180,8 +213,9 @@ def main():
         fh.write(template.replace("/*__DATA__*/", data_block))
 
     accounts = len({(r[0], r[1]) for r in rows})
+    be_note = ", ".join(f"{k}={v}×" for k, v in sorted(break_even.items()))
     print(f"dashboard.html yazıldı — {len(rows)} satır, {accounts} hesap, "
-          f"{len(periods)} dönem, senkron {updated}")
+          f"{len(periods)} dönem, başabaş {be_note}, senkron {updated}")
 
 
 if __name__ == "__main__":
