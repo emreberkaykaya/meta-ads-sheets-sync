@@ -14,7 +14,8 @@ import json
 import os
 import re
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import gspread
 from dotenv import load_dotenv
@@ -182,9 +183,16 @@ def main():
     rows, d2c_rows, updated, labels = read_sheet()
     break_even = break_even_map()
 
-    # Veri dünle biter; "dün"ü senkron damgasından türetiyoruz.
-    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", updated)
-    synced = date(int(m.group(1)), int(m.group(2)), int(m.group(3))) if m else date.today()
+    # Veri dünle biter; "dün"ü senkron damgasından türetiyoruz. Damga UTC ama
+    # sync.py dönemleri İstanbul saatine göre kesiyor. 21:00–24:00 UTC arası
+    # İstanbul'da ertesi gün olduğu için UTC tarihini doğrudan kullanmak
+    # etiketleri bir gün geride gösteriyordu (veri 15 Eylül, etiket 14 Eylül).
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})", updated)
+    if m:
+        synced_utc = datetime(*map(int, m.groups()), tzinfo=timezone.utc)
+        synced = synced_utc.astimezone(ZoneInfo("Europe/Istanbul")).date()
+    else:
+        synced = datetime.now(ZoneInfo("Europe/Istanbul")).date()
     ranges = period_ranges(synced - timedelta(days=1), synced)
 
     # 10 ve üzeri sıra numaraları karşılaştırma dönemleri (sync.py'ye bak):
