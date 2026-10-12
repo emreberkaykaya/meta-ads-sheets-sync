@@ -56,6 +56,9 @@ BRAND_TOKEN_ENV_VAR = {
     "Aqua di Polo": "META_ACCESS_TOKEN_AQUA_DI_POLO",
     "Frime": "META_ACCESS_TOKEN_FRIME",
     "Pierre Cardin": "META_ACCESS_TOKEN_PIERRE_CARDIN",
+    # MissLiva yalnızca D2C'de var ve reklam hesabı Aqua di Polo Turkey
+    # portföyünde; o portföyün sistem kullanıcısı hesaba zaten erişiyor.
+    "MissLiva": "META_ACCESS_TOKEN_AQUA_DI_POLO",
 }
 
 # Dönemler tek bir yerden, `period_bounds()` ile üretiliyor — Graph API'nin
@@ -107,12 +110,23 @@ SHEET_HEADER = [
 D2C_META_ACCOUNTS = {
     "Frime": "2121533615302118",
     "Aqua di Polo": "1215686160473015",
+    "MissLiva": "1123824406969942",
 }
 
 # Marka -> (SHOPIFY_ACCESS_TOKEN_ENV_VAR, SHOPIFY_SHOP_ENV_VAR)
 D2C_SHOPIFY_ENV_VARS = {
     "Frime": ("SHOPIFY_ACCESS_TOKEN_FRIME", "SHOPIFY_SHOP_FRIME"),
     "Aqua di Polo": ("SHOPIFY_ACCESS_TOKEN_AQUA_DI_POLO", "SHOPIFY_SHOP_AQUA_DI_POLO"),
+    "MissLiva": ("SHOPIFY_ACCESS_TOKEN_MISSLIVA", "SHOPIFY_SHOP_MISSLIVA"),
+}
+
+# Kalıcı Admin API token'ı olmayan mağazalar için Dev Dashboard'daki
+# "Reporting" uygulaması (read_orders, read_products). Shopify 2026'da panelden
+# eski usul özel uygulama açtırmıyor; aynı organizasyondaki mağazaya kurulu bir
+# Dev Dashboard uygulaması client credentials ile 24 saatlik token alabiliyor,
+# sync her çalışmada taze token istiyor.
+D2C_SHOPIFY_CLIENT_CREDS = {
+    "MissLiva": ("SHOPIFY_CLIENT_ID_REPORTING", "SHOPIFY_CLIENT_SECRET_REPORTING"),
 }
 
 D2C_META_FIELDS = ["reach", "impressions", "clicks", "spend"]
@@ -409,6 +423,33 @@ def resolve_d2c_meta_token(brand: str, ad_account_id: str) -> str:
     return brand_token
 
 
+def shopify_client_credentials_token(shop: str, client_id: str, client_secret: str) -> str:
+    """Client credentials grant: yönlendirmesiz, 24 saat geçerli Admin API token'ı."""
+    resp = requests.post(
+        f"https://{shop}/admin/oauth/access_token",
+        data={"grant_type": "client_credentials", "client_id": client_id,
+              "client_secret": client_secret},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()["access_token"]
+
+
+def resolve_shopify_token(brand: str, shop: str):
+    """Önce kalıcı token, yoksa client credentials; ikisi de yoksa None."""
+    token_var, _ = D2C_SHOPIFY_ENV_VARS[brand]
+    token = os.environ.get(token_var)
+    if token:
+        return token
+    creds = D2C_SHOPIFY_CLIENT_CREDS.get(brand)
+    if not creds:
+        return None
+    client_id, client_secret = (os.environ.get(v) for v in creds)
+    if not client_id or not client_secret:
+        return None
+    return shopify_client_credentials_token(shop, client_id, client_secret)
+
+
 def sync_d2c(spreadsheet, now_str: str) -> None:
     worksheet = get_or_create_worksheet(spreadsheet, "D2C", header=D2C_SHEET_HEADER)
     rows = [D2C_SHEET_HEADER]
@@ -417,8 +458,12 @@ def sync_d2c(spreadsheet, now_str: str) -> None:
     for brand, ad_account_id in D2C_META_ACCOUNTS.items():
         access_token = resolve_d2c_meta_token(brand, ad_account_id)
         token_var, shop_var = D2C_SHOPIFY_ENV_VARS[brand]
-        shopify_token = os.environ.get(token_var)
         shopify_shop = os.environ.get(shop_var)
+        try:
+            shopify_token = resolve_shopify_token(brand, shopify_shop) if shopify_shop else None
+        except requests.HTTPError as exc:
+            print(f"  HATA (Shopify token): {brand}: {exc.response.text[:200]}", file=sys.stderr)
+            shopify_token = None
         if not shopify_token or not shopify_shop:
             print(f"  ATLANDI: {brand} için Shopify erişimi ({token_var}) tanımlı değil.", file=sys.stderr)
             continue
