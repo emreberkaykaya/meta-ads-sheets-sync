@@ -143,8 +143,9 @@ def read_sheet():
                     int(num(row[D2C_COL["impressions"]]) or 0),
                     int(num(row[D2C_COL["clicks"]]) or 0),
                     num(row[D2C_COL["spend"]]) or 0,
-                    num(row[D2C_COL["revenue"]]) or 0,
-                    int(num(row[D2C_COL["orders"]]) or 0),
+                    # Boş = Shopify bağlı değil (None); 0 ile karıştırılmasın.
+                    num(row[D2C_COL["revenue"]]),
+                    None if num(row[D2C_COL["orders"]]) is None else int(num(row[D2C_COL["orders"]])),
                 ])
             continue  # CPAS satırı gibi işlenmesin
 

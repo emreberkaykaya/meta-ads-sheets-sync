@@ -382,12 +382,16 @@ const recs = D.map(r => ({
 
 const d2cRecs = D2C.map(r => ({
   brand:r[0], period:r[1], reach:r[2], impressions:r[3],
-  clicks:r[4], spend:r[5], revenue:r[6], orders:r[7],
+  clicks:r[4], spend:r[5], revenue:r[6] ?? 0, orders:r[7] ?? 0,
+  hasShop: r[6] !== null,
   // CPAS'taki gibi Meta'nın kendi attribution'ı değil: Shopify'ın gerçek cirosu
   // ÷ Meta harcaması. Frime'ın pikseli satın alma döndürmediği için elde tek
   // güvenilir ROAS kaynağı bu.
-  roas: r[5] ? r[6] / r[5] : 0
+  roas: r[5] && r[6] !== null ? r[6] / r[5] : 0
 }));
+const NO_SHOP = "Shopify bağlı değil";
+const shopMoney = r => r.hasShop ? money(r.revenue) : "—";
+const shopNum   = r => r.hasShop ? n(r.orders) : "—";
 
 const tl  = new Intl.NumberFormat("tr-TR",{maximumFractionDigits:0});
 const tl2 = new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -590,7 +594,8 @@ function acctBlock(r, totalSpend){
 // birleştirilmiyor, her biri kendi ROAS'ıyla duruyor.
 function d2cCard(r){
   const b = band(r.roas, r.brand, r.spend), p = prevD2C(r);
-  const cmp = r.orders
+  const cmp = !r.hasShop ? `<span class="card-sub">${NO_SHOP}</span>`
+    : r.orders
     ? (p ? cmpLine(r.roas, p.roas, true) : "")
     : `<span class="card-sub">${r.spend ? "harcama var, Shopify'da sipariş yok" : "bu dönem reklam yok"}</span>`;
   return `
@@ -605,8 +610,8 @@ function d2cCard(r){
     </div>
     <dl class="card-kv">
       <div><dt>Harcama</dt><dd>${money(r.spend)}</dd></div>
-      <div><dt>Ciro</dt><dd>${money(r.revenue)}</dd></div>
-      <div><dt>Sipariş</dt><dd>${n(r.orders)}</dd></div>
+      <div><dt>Ciro</dt><dd>${shopMoney(r)}</dd></div>
+      <div><dt>Sipariş</dt><dd>${shopNum(r)}</dd></div>
     </dl>
   </article>`;
 }
@@ -630,7 +635,8 @@ function d2cBlock(r, totalSpend){
         <span class="chip">Kendi sitesi</span>
       </div>
       <div class="acct-roas">${
-        r.orders ? (p ? cmpLine(r.roas, p.roas, true) : "")
+        !r.hasShop ? `<span class="cmp">${NO_SHOP}</span>`
+        : r.orders ? (p ? cmpLine(r.roas, p.roas, true) : "")
                  : `<span class="cmp">${r.spend ? "harcama var, Shopify'da sipariş yok" : "bu dönem reklam yok"}</span>`
       }<b>${roasTxt(r.roas, r.orders)}</b><span>ROAS</span></div>
     </div>
@@ -638,9 +644,9 @@ function d2cBlock(r, totalSpend){
       <dl class="kv">
         <div><dt>Harcama</dt><dd>${money(r.spend)}<small>${
           withDelta(`toplam harcamada pay ${pct(share)}`, r.spend, p && p.spend, false)}</small></dd></div>
-        <div><dt>Shopify cirosu</dt><dd>${money(r.revenue)}<small>${
+        <div><dt>Shopify cirosu</dt><dd>${shopMoney(r)}<small>${ !r.hasShop ? NO_SHOP :
           withDelta(`₺1 harcamaya ₺${tl2.format(r.roas)}`, r.revenue, p && p.revenue, true)}</small></dd></div>
-        <div><dt>Sipariş</dt><dd>${n(r.orders)}<small>${
+        <div><dt>Sipariş</dt><dd>${shopNum(r)}<small>${ !r.hasShop ? NO_SHOP :
           withDelta(r.orders ? "sepet ortalaması " + money(aov) : "bu dönem sipariş yok",
                     r.orders, p && p.orders, true)}</small></dd></div>
         <div><dt>Erişim</dt><dd>${n(r.reach)}<small>kişi başı ${tl2.format(freq)} gösterim</small></dd></div>
@@ -833,7 +839,9 @@ function d2cRender(){
   const tSpend = sum(rows, r => r.spend);
   const tRev   = sum(rows, r => r.revenue);
   const tOrd   = sum(rows, r => r.orders);
-  const tRoas  = tSpend ? tRev / tSpend : 0;
+  // ROAS yalnız cirosu ölçülen markaların harcamasına bölünür.
+  const shopSpend = sum(rows.filter(r => r.hasShop), r => r.spend);
+  const tRoas  = shopSpend ? tRev / shopSpend : 0;
 
   document.getElementById("d2c-cards").innerHTML = rows
     .slice()
@@ -850,8 +858,8 @@ function d2cRender(){
       <td>${n(r.impressions)}</td>
       <td>${n(r.clicks)}</td>
       <td>${money(r.spend)}</td>
-      <td>${money(r.revenue)}</td>
-      <td>${n(r.orders)}</td>
+      <td>${shopMoney(r)}</td>
+      <td>${shopNum(r)}</td>
       <td><span class="roas-pill" style="color:var(--${b});background:var(--surface-2)">${roasTxt(r.roas, r.orders)}</span></td>
     </tr>`;
   }).join("");

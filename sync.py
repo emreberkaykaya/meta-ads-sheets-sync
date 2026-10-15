@@ -465,8 +465,10 @@ def sync_d2c(spreadsheet, now_str: str) -> None:
             print(f"  HATA (Shopify token): {brand}: {exc.response.text[:200]}", file=sys.stderr)
             shopify_token = None
         if not shopify_token or not shopify_shop:
-            print(f"  ATLANDI: {brand} için Shopify erişimi ({token_var}) tanımlı değil.", file=sys.stderr)
-            continue
+            # Marka yine panelde görünsün: Meta tarafı yazılır, ciro/sipariş
+            # hücreleri boş kalır ("Shopify bağlı değil" olarak gösterilir).
+            print(f"  UYARI: {brand} için Shopify erişimi ({token_var}) yok; yalnız Meta yazılıyor.", file=sys.stderr)
+            shopify_token = None
 
         for period_label, since, until, sort_order in periods:
             print(f"Çekiliyor (D2C): {brand} / {period_label}...")
@@ -475,11 +477,14 @@ def sync_d2c(spreadsheet, now_str: str) -> None:
             except requests.HTTPError as exc:
                 print(f"  HATA (Meta): {exc.response.text}", file=sys.stderr)
                 continue
-            try:
-                shop = fetch_shopify_metrics(shopify_shop, shopify_token, since, until)
-            except requests.HTTPError as exc:
-                print(f"  HATA (Shopify): {exc.response.text}", file=sys.stderr)
-                continue
+            if shopify_token is None:
+                shop = {"revenue": "", "orders": ""}
+            else:
+                try:
+                    shop = fetch_shopify_metrics(shopify_shop, shopify_token, since, until)
+                except requests.HTTPError as exc:
+                    print(f"  HATA (Shopify): {exc.response.text}", file=sys.stderr)
+                    continue
 
             rows.append([
                 period_label,
