@@ -321,7 +321,7 @@ td .c{color:var(--muted);font-size:12px}
 
   <section class="sec">
     <h2>1 · Markalar</h2>
-    <p>Marka başına ROAS = Shopify cirosu ÷ Meta harcaması. Yarım dairedeki
+    <p>Marka başına ROAS = Shopify cirosu ÷ Meta + Google harcaması. Yarım dairedeki
        çentik başabaş. Toplamlar en alttaki tablonun Toplam satırında.</p>
   </section>
   <div class="cards" id="d2c-cards"></div>
@@ -342,7 +342,8 @@ td .c{color:var(--muted);font-size:12px}
       <table>
         <thead><tr>
           <th>Marka</th><th>Erişim</th><th>Gösterim</th><th>Tıklama</th>
-          <th>Harcama</th><th>Shopify Ciro</th><th>Shopify Sipariş</th><th>ROAS</th>
+          <th>Meta Harcama</th><th>Google Harcama</th><th>Toplam Harcama</th>
+          <th>Shopify Ciro</th><th>Shopify Sipariş</th><th>ROAS</th>
         </tr></thead>
         <tbody id="d2c-tbody"></tbody>
         <tfoot id="d2c-tfoot"></tfoot>
@@ -351,10 +352,12 @@ td .c{color:var(--muted);font-size:12px}
   </section>
 
   <footer class="notes">
-    <p>Harcama ve erişim/gösterim/tıklama markanın <b>kendi web sitesine</b> giden Meta hesabından —
-       CPAS'taki pazaryeri ortak reklamlarıyla ilgisi yok. Ciro ve sipariş Shopify'ın kendi
+    <p>Harcama markanın <b>kendi web sitesine</b> giden Meta hesabı ile Google Ads hesabının
+       toplamı; erişim/gösterim/tıklama yalnız Meta'dan — CPAS'taki pazaryeri ortak reklamlarıyla
+       ilgisi yok. Google Ads harcaması hesapta saatlik çalışan bir betikle gelir; betiği olmayan
+       markada "yalnız Meta" yazar. Ciro ve sipariş Shopify'ın kendi
        <b>orders.json</b> uç noktasından, iptal edilen siparişler hariç. <b>ROAS = Shopify cirosu ÷
-       Meta harcaması</b> — Meta'nın kendi attribution'ı değil, çünkü Frime'ın pikseli satın alma
+       Meta + Google harcaması</b> — Meta'nın kendi attribution'ı değil, çünkü Frime'ın pikseli satın alma
        döndürmüyor. Sipariş <b>siparişin düştüğü güne</b> yazılır, bu yüzden CPAS'taki "Satış" ile
        birebir aynı mantıkta değildir. Shopify oturum (session) verisi bu raporda yok — Shopify'ın
        <b>read_reports</b> izni ve ayrıca resmi "korumalı veri" onayı gerektiriyor, henüz talep edilmedi.
@@ -380,15 +383,26 @@ const recs = D.map(r => ({
   roas:r[3] ? (r[7] === null ? 0 : r[7]) / r[3] : 0
 }));
 
-const d2cRecs = D2C.map(r => ({
-  brand:r[0], period:r[1], reach:r[2], impressions:r[3],
-  clicks:r[4], spend:r[5], revenue:r[6] ?? 0, orders:r[7] ?? 0,
-  hasShop: r[6] !== null,
-  // CPAS'taki gibi Meta'nın kendi attribution'ı değil: Shopify'ın gerçek cirosu
-  // ÷ Meta harcaması. Frime'ın pikseli satın alma döndürmediği için elde tek
-  // güvenilir ROAS kaynağı bu.
-  roas: r[5] && r[6] !== null ? r[6] / r[5] : 0
-}));
+// Erişim/gösterim/tıklama yalnız Meta'dan; harcama Meta + Google Ads.
+const d2cRecs = D2C.map(r => {
+  const google = r[8] ?? 0, spend = r[5] + google;
+  return {
+    brand:r[0], period:r[1], reach:r[2], impressions:r[3],
+    clicks:r[4], metaSpend:r[5], googleSpend:google, spend,
+    revenue:r[6] ?? 0, orders:r[7] ?? 0,
+    hasShop: r[6] !== null,
+    hasGoogle: r[8] !== null && r[8] !== undefined,
+    // CPAS'taki gibi Meta'nın kendi attribution'ı değil: Shopify'ın gerçek
+    // cirosu ÷ toplam (Meta + Google) harcama. Frime'ın pikseli satın alma
+    // döndürmediği için elde tek güvenilir ROAS kaynağı bu.
+    roas: spend && r[6] !== null ? r[6] / spend : 0
+  };
+});
+// Harcamanın kanal kırılımı; Google betiği kurulu olmayan markada yalnız Meta.
+const spendSplit = r => r.hasGoogle
+  ? `Meta ${money(r.metaSpend)} · Google ${money(r.googleSpend)}`
+  : "yalnız Meta";
+const googleMoney = r => r.hasGoogle ? money(r.googleSpend) : "—";
 const NO_SHOP = "Shopify bağlı değil";
 const shopMoney = r => r.hasShop ? money(r.revenue) : "—";
 const shopNum   = r => r.hasShop ? n(r.orders) : "—";
@@ -609,7 +623,7 @@ function d2cCard(r){
       </div>
     </div>
     <dl class="card-kv">
-      <div><dt>Harcama</dt><dd>${money(r.spend)}</dd></div>
+      <div><dt>Harcama</dt><dd>${money(r.spend)}<small>${spendSplit(r)}</small></dd></div>
       <div><dt>Ciro</dt><dd>${shopMoney(r)}</dd></div>
       <div><dt>Sipariş</dt><dd>${shopNum(r)}</dd></div>
     </dl>
@@ -643,7 +657,7 @@ function d2cBlock(r, totalSpend){
     <div class="acct-body">
       <dl class="kv">
         <div><dt>Harcama</dt><dd>${money(r.spend)}<small>${
-          withDelta(`toplam harcamada pay ${pct(share)}`, r.spend, p && p.spend, false)}</small></dd></div>
+          withDelta(`${spendSplit(r)} · pay ${pct(share)}`, r.spend, p && p.spend, false)}</small></dd></div>
         <div><dt>Shopify cirosu</dt><dd>${shopMoney(r)}<small>${ !r.hasShop ? NO_SHOP :
           withDelta(`₺1 harcamaya ₺${tl2.format(r.roas)}`, r.revenue, p && p.revenue, true)}</small></dd></div>
         <div><dt>Sipariş</dt><dd>${shopNum(r)}<small>${ !r.hasShop ? NO_SHOP :
@@ -656,8 +670,8 @@ function d2cBlock(r, totalSpend){
         ${duoRow("Ciro", r.revenue, max, "var(--accent)")}
       </div>
       <ol class="steps">
-        ${step("Gösterim", n(r.impressions), "reklamın açılma sayısı")}
-        ${step("Tıklama", n(r.clicks), `gösterimden dönüşüm <b>${pct(ctr)}</b>`)}
+        ${step("Meta gösterim", n(r.impressions), "reklamın açılma sayısı")}
+        ${step("Meta tıklama", n(r.clicks), `gösterimden dönüşüm <b>${pct(ctr)}</b>`)}
         ${step("Sipariş", n(r.orders), `tıklamadan dönüşüm <b>${pct(cvr)}</b>`)}
       </ol>
     </div>
@@ -857,6 +871,8 @@ function d2cRender(){
       <td>${n(r.reach)}</td>
       <td>${n(r.impressions)}</td>
       <td>${n(r.clicks)}</td>
+      <td>${money(r.metaSpend)}</td>
+      <td>${googleMoney(r)}</td>
       <td>${money(r.spend)}</td>
       <td>${shopMoney(r)}</td>
       <td>${shopNum(r)}</td>
@@ -869,6 +885,8 @@ function d2cRender(){
     <td>${n(sum(rows, r => r.reach))}</td>
     <td>${n(sum(rows, r => r.impressions))}</td>
     <td>${n(sum(rows, r => r.clicks))}</td>
+    <td>${money(sum(rows, r => r.metaSpend))}</td>
+    <td>${money(sum(rows, r => r.googleSpend))}</td>
     <td>${money(tSpend)}</td>
     <td>${money(tRev)}</td>
     <td>${n(tOrd)}</td>

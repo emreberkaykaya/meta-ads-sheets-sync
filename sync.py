@@ -6,7 +6,8 @@ Meta (Facebook/Instagram) Ads + Shopify -> Google Sheets anlık rapor senkroniza
 1. CPAS — Aqua di Polo, Frime ve Pierre Cardin markalarının Trendyol/Hepsiburada
    hesaplarındaki "shared items" (collaborative ads / catalog segment) metrikleri.
 2. D2C — Frime ve Aqua di Polo'nun kendi web sitesine giden Meta hesabından
-   harcama/ROAS/CPC/CTR, Shopify'dan gerçek sipariş ve ciro. ROAS burada Meta'nın
+   harcama/ROAS/CPC/CTR, Google Ads harcaması (google_ads_script.js'in Sheet'e
+   yazdığı günlüklerden), Shopify'dan gerçek sipariş ve ciro. ROAS burada Meta'nın
    kendi attribution'ı yerine Meta harcaması ÷ Shopify cirosu olarak hesaplanır —
    Frime'ın pikseli satın alma döndürmediği için Meta'nın kendi ROAS'ı güvenilmez.
 
@@ -22,7 +23,7 @@ Kullanım:
 
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import requests
 from dotenv import load_dotenv
@@ -141,8 +142,15 @@ D2C_SHEET_HEADER = [
     "Amount Spent",
     "Shopify Revenue",
     "Shopify Orders",
+    "Google Ads Spend",
     "Son Güncelleme (UTC)",
 ]
+
+# Google Ads harcaması API'den değil, her Google Ads hesabında saatlik çalışan
+# google_ads_script.js'in Sheet'e yazdığı günlük satırlardan okunur (Ads API
+# geliştirici jetonu onay istiyor). Sekme yoksa marka "Google bağlı değil".
+GOOGLE_ADS_TAB = "Google Ads - {brand}"
+GOOGLE_ADS_STALE_AFTER = timedelta(hours=26)
 
 # Dönem sınırları Europe/Istanbul yerel saatiyle hesaplanır ki "Dün" ve
 # "Bu Ay" Meta ile Shopify'da aynı günleri işaret etsin.
@@ -450,8 +458,45 @@ def resolve_shopify_token(brand: str, shop: str):
     return shopify_client_credentials_token(shop, client_id, client_secret)
 
 
+def read_google_ads_daily(spreadsheet, brand: str):
+    """Betiğin yazdığı sekmeden {gün: harcama} döner; sekme yoksa None."""
+    try:
+        worksheet = spreadsheet.worksheet(GOOGLE_ADS_TAB.format(brand=brand))
+    except gspread.WorksheetNotFound:
+        return None
+    # Biçimlenmemiş değer: Sheet yerel ayarı "12,34" döndürüp float'ı bozmasın.
+    values = worksheet.get_all_values(value_render_option="UNFORMATTED_VALUE")
+    daily, stamp, tz = {}, "", ""
+    for row in values[1:]:
+        if len(row) < 7:
+            continue
+        tz, stamp = str(row[5]), str(row[6])
+        day = str(row[0]).strip()
+        if day:
+            daily[date.fromisoformat(day)] = float(row[1] or 0)
+
+    if tz and tz != "Europe/Istanbul":
+        print(f"  UYARI: {brand} Google Ads hesabı {tz} saat diliminde; günler Meta ile kayabilir.", file=sys.stderr)
+    try:
+        updated = datetime.strptime(stamp, "%Y-%m-%d %H:%M UTC").replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) - updated > GOOGLE_ADS_STALE_AFTER:
+            print(f"  UYARI: {brand} Google Ads verisi eski ({stamp}); betik çalışıyor mu?", file=sys.stderr)
+    except ValueError:
+        print(f"  UYARI: {brand} Google Ads sekmesinde güncelleme damgası yok.", file=sys.stderr)
+    return daily
+
+
+def google_ads_spend(daily, since: datetime, until: datetime):
+    """[since, until) aralığının toplamı; betik kurulu değilse boş hücre."""
+    if daily is None:
+        return ""
+    return round(sum(v for d, v in daily.items() if since.date() <= d < until.date()), 2)
+
+
 def sync_d2c(spreadsheet, now_str: str) -> None:
     worksheet = get_or_create_worksheet(spreadsheet, "D2C", header=D2C_SHEET_HEADER)
+    if worksheet.col_count < len(D2C_SHEET_HEADER):
+        worksheet.resize(cols=len(D2C_SHEET_HEADER))  # eski sekme yeni sütuna yer açsın
     rows = [D2C_SHEET_HEADER]
     periods = period_bounds()
 
@@ -469,6 +514,7 @@ def sync_d2c(spreadsheet, now_str: str) -> None:
             # hücreleri boş kalır ("Shopify bağlı değil" olarak gösterilir).
             print(f"  UYARI: {brand} için Shopify erişimi ({token_var}) yok; yalnız Meta yazılıyor.", file=sys.stderr)
             shopify_token = None
+        google_daily = read_google_ads_daily(spreadsheet, brand)
 
         for period_label, since, until, sort_order in periods:
             print(f"Çekiliyor (D2C): {brand} / {period_label}...")
@@ -496,6 +542,7 @@ def sync_d2c(spreadsheet, now_str: str) -> None:
                 meta["spend"],
                 shop["revenue"],
                 shop["orders"],
+                google_ads_spend(google_daily, since, until),
                 now_str,
             ])
 

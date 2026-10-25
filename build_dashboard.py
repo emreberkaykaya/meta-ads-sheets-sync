@@ -37,7 +37,8 @@ COL = {
 # sync.py'deki D2C_SHEET_HEADER ile aynı olmalı
 D2C_COL = {
     "period": 0, "order": 1, "brand": 2, "reach": 3, "impressions": 4,
-    "clicks": 5, "spend": 6, "revenue": 7, "orders": 8, "updated": 9,
+    "clicks": 5, "spend": 6, "revenue": 7, "orders": 8, "google_spend": 9,
+    "updated": 10,
 }
 
 # sync.py'deki karşılaştırma dönemi sıra numarası kaydırması
@@ -146,6 +147,8 @@ def read_sheet():
                     # Boş = Shopify bağlı değil (None); 0 ile karıştırılmasın.
                     num(row[D2C_COL["revenue"]]),
                     None if num(row[D2C_COL["orders"]]) is None else int(num(row[D2C_COL["orders"]])),
+                    # Boş = Google Ads betiği kurulu değil (None).
+                    num(row[D2C_COL["google_spend"]]) if len(row) > D2C_COL["google_spend"] else None,
                 ])
             continue  # CPAS satırı gibi işlenmesin
 
