@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marka İzleme Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --ground:#e9eded; --surface:#ffffff; --surface-2:#f4f6f6;
+  --ink:#10181a; --ink-2:#3c4a4d; --muted:#66787b;
+  --line:#d2dadb; --line-soft:#e4eaea;
+  --accent:#0f5d68; --accent-soft:#d8e8ea; --neutral-bar:#9fb0b2;
+  --pos:#1a7f5a; --warn:#a76a15; --crit:#b23b3b; --track:#dde5e5;
+  --ch-a:#0f5d68; --ch-b:#7a5aa8; --ch-c:#c2702e;
+  --shadow:0 1px 2px rgba(16,24,26,.05), 0 8px 24px -16px rgba(16,24,26,.35);
+  --on-accent:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0d1314; --surface:#151d1f; --surface-2:#1b2426;
+    --ink:#e7eeee; --ink-2:#bcc9ca; --muted:#8ba0a2;
+    --line:#283436; --line-soft:#212c2e;
+    --accent:#5cb6c2; --accent-soft:#17383d; --neutral-bar:#4a5a5c;
+    --pos:#4fc294; --warn:#dda34a; --crit:#e57373; --track:#232e30;
+    --ch-a:#5cb6c2; --ch-b:#a894dd; --ch-c:#e39a5b;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+    --on-accent:#08181b;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0d1314; --surface:#151d1f; --surface-2:#1b2426;
+  --ink:#e7eeee; --ink-2:#bcc9ca; --muted:#8ba0a2;
+  --line:#283436; --line-soft:#212c2e;
+  --accent:#5cb6c2; --accent-soft:#17383d; --neutral-bar:#4a5a5c;
+  --pos:#4fc294; --warn:#dda34a; --crit:#e57373; --track:#232e30;
+  --ch-a:#5cb6c2; --ch-b:#a894dd; --ch-c:#e39a5b;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  --on-accent:#08181b;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 72px;display:flex;flex-direction:column;gap:16px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+h1{font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(24px,3.4vw,34px);letter-spacing:-.02em;margin:0}
+h2{font-family:Archivo,sans-serif;font-weight:700;font-size:18px;margin:0}
+.top{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stamp{font-size:13px;color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--ink-2);font:600 13px "IBM Plex Sans",sans-serif;
+  padding:7px 14px;border-radius:7px;cursor:pointer;transition:background .15s,color .15s}
+.seg button:hover{background:var(--surface-2);color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.seg button:focus-visible,.btn:focus-visible,.chip-btn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg.big button{font-size:15px;padding:9px 20px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 2px -4px}
+.sec-head p{margin:0;color:var(--muted);font-size:13px}
+
+/* özet şeridi */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:0}
+.sum{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.sum-head{display:flex;justify-content:space-between;align-items:baseline}
+.sum-name{font-family:Archivo,sans-serif;font-weight:700;font-size:18px}
+.sum-lbl{font:600 11px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sum-roas{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sum-roas b{font-family:Archivo,sans-serif;font-weight:800;font-size:34px;letter-spacing:-.02em;line-height:1}
+.sum-kv{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:0;padding-top:10px;border-top:1px solid var(--line-soft)}
+.sum-kv dt{font-size:11.5px;color:var(--muted)}
+.sum-kv dd{margin:0;font-weight:600;font-size:16px}
+.sum-kv dd small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+
+/* marka hedef kartları */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:16px 18px;display:flex;flex-direction:column;gap:12px;border-top:4px solid var(--st,var(--line))}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card-name{font-family:Archivo,sans-serif;font-weight:700;font-size:19px}
+.status{font:600 12px "IBM Plex Sans";padding:3px 10px;border-radius:99px;color:var(--st);background:var(--surface-2);white-space:nowrap}
+.meter{display:flex;flex-direction:column;gap:5px}
+.meter-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:var(--ink-2)}
+.meter-top b{font-family:Archivo,sans-serif;font-size:20px;color:var(--ink)}
+.meter-top .pct{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--st)}
+.bar{position:relative;height:10px;background:var(--track);border-radius:99px;overflow:visible}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--st,var(--accent));max-width:100%}
+.bar u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.7;text-decoration:none}
+.meter-sub{font-size:12px;color:var(--muted)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:0;padding-top:10px;border-top:1px solid var(--line-soft)}
+.facts dt{font-size:11.5px;color:var(--muted)}
+.facts dd{margin:0;font-weight:600;font-size:14.5px}
+.facts dd small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+.card-foot{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font:600 13px "IBM Plex Sans";
+  padding:7px 12px;border-radius:8px;cursor:pointer;transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.edit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.edit label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.edit input{font:500 15px "IBM Plex Mono";padding:8px 10px;border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);color:var(--ink);width:100%}
+.edit .row{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.edit .msg{margin-right:auto;font-size:12px;color:var(--muted)}
+.empty{color:var(--muted);font-size:13px}
+.d{font-size:11.5px;font-family:"IBM Plex Mono",monospace;font-weight:600}
+.d.up{color:var(--pos)} .d.down{color:var(--crit)} .d.flat{color:var(--muted)}
+
+/* grafikler */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip-btn{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font:600 13px "IBM Plex Sans";
+  padding:6px 12px;border-radius:99px;cursor:pointer}
+.chip-btn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.charts{display:grid;grid-template-columns:1fr;gap:14px}
+.chart-box{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px}
+.chart-box h3{margin:0 0 2px;font:700 14px Archivo,sans-serif}
+.chart-box p{margin:0 0 8px;font-size:12px;color:var(--muted)}
+.chart-box .cv{position:relative;height:260px}
+
+/* tablo */
+.tbl-scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line-soft)}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+tr.today td{background:var(--surface-2)}
+tfoot td{font-weight:700;border-top:2px solid var(--line)}
+.note{font-size:12.5px;color:var(--muted);line-height:1.6;margin:0}
+@media (max-width:560px){ .facts{grid-template-columns:1fr} .seg.big button{padding:8px 13px;font-size:14px} }
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Aqua di Polo · Frime · Pierre Cardin · MissLiva</div>
+      <h1>Marka İzleme Paneli</h1>
+      <div class="stamp">Son güncelleme <span class="mono" id="stamp"></span> (İstanbul) · veri 2 saatte bir yenilenir</div>
+    </div>
+    <div class="controls">
+      <div class="seg" id="months" role="group" aria-label="Ay"></div>
+    </div>
+  </header>
+
+  <nav class="seg big" id="tabs" role="tablist" aria-label="Kanal">
+    <button type="button" data-ch="trendyol" aria-pressed="true">Trendyol</button>
+    <button type="button" data-ch="hepsiburada" aria-pressed="false">Hepsiburada</button>
+    <button type="button" data-ch="d2c" aria-pressed="false">D2C</button>
+  </nav>
+
+  <section aria-labelledby="ozet-h">
+    <div class="sec-head" style="margin-bottom:10px"><h2 id="ozet-h">Markalar</h2><p id="ozet-sub"></p></div>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section id="goal-sec" aria-labelledby="goal-h">
+    <div class="sec-head">
+      <h2 id="goal-h">Hedef takibi</h2>
+      <p>Dikey çizgi: bugüne kadar olması gereken. Tahmin, dün sonuna kadarki günlük ortalamayla ay sonu.</p>
+    </div>
+  </section>
+  <div class="cards" id="cards"></div>
+
+  <section aria-labelledby="ch-h">
+    <div class="sec-head">
+      <h2 id="ch-h">Günlük grafikler</h2>
+      <div class="chips" id="brand-chips" role="group" aria-label="Marka"></div>
+    </div>
+  </section>
+  <div class="charts" id="charts"></div>
+
+  <section class="panel" aria-labelledby="tb-h">
+    <div class="sec-head" style="margin:0 0 10px">
+      <h2 id="tb-h">Gün gün</h2><p id="tb-sub"></p>
+    </div>
+    <div class="tbl-scroll"><table>
+      <thead id="thead"></thead><tbody id="tbody"></tbody><tfoot id="tfoot"></tfoot>
+    </table></div>
+  </section>
+
+  <footer class="panel">
+    <p class="note" id="foot"></p>
+  </footer>
+</main>
+
+<script>
+/*__DATA__*/
+
+const CH_NOTES = {
+  trendyol: "Trendyol ciro ve sipariş, Meta CPAS reklamlarının Trendyol'da getirdiği satışlar (catalog segment, omni_purchase) — Trendyol'un toplam mağaza satışı değil. Hedefler de bu rakama göre izlenir.",
+  hepsiburada: "Hepsiburada ciro ve sipariş, Meta CPAS reklamlarının Hepsiburada'da getirdiği satışlar (catalog segment). Bu kanalda hedef takibi yok.",
+  d2c: "D2C ciro ve sipariş Shopify'dan (iptaller hariç, siparişin düştüğü gün). Harcama = Meta (web hesabı) + Google Ads; ROAS = Shopify cirosu ÷ toplam harcama. Google Ads verisi hesaptaki betik kurulunca görünür.",
+};
+const TARGET_CH = ["trendyol", "d2c"];
+const AYLAR = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const DAYS = DATA.days, TODAY = DATA.today, CUR_MONTH = TODAY.slice(0, 7);
+
+/* ---------- biçim ---------- */
+const f0 = new Intl.NumberFormat("tr-TR", {maximumFractionDigits: 0});
+const f2 = new Intl.NumberFormat("tr-TR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const money = v => v === null || v === undefined || !isFinite(v) ? "—" : "₺" + f0.format(Math.round(v));
+const num = v => v === null || v === undefined || !isFinite(v) ? "—" : f0.format(Math.round(v));
+const roasF = v => v ? f2.format(v) + "×" : "—";
+const pctF = v => v === null || !isFinite(v) ? "—" : "%" + f0.format(Math.round(v * 100));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const sum = a => a.reduce((x, y) => x + (y || 0), 0);
+const monthName = m => `${AYLAR[+m.slice(5) - 1]} ${m.slice(0, 4)}`;
+const dayLabel = d => `${+d.slice(8)} ${AYLAR[+d.slice(5, 7) - 1].slice(0, 3)}`;
+const dim = m => new Date(+m.slice(0, 4), +m.slice(5), 0).getDate();
+function prevMonth(m){ const y = +m.slice(0, 4), mo = +m.slice(5); return mo === 1 ? `${y - 1}-12` : `${y}-${String(mo - 1).padStart(2, "0")}`; }
+function delta(cur, prev){
+  if (!prev || cur === null) return "";
+  const p = (cur - prev) / prev, cls = p > 0.005 ? "up" : p < -0.005 ? "down" : "flat";
+  return `<span class="d ${cls}">${p > 0 ? "▲" : p < 0 ? "▼" : "•"} ${pctF(Math.abs(p))}</span>`;
+}
+
+/* ---------- durum ---------- */
+let ch = "trendyol", month = CUR_MONTH, brandSel = null;
+let targets = Object.assign({}, DATA.targets || {});
+try { Object.assign(targets, JSON.parse(localStorage.getItem("hedefler-yerel") || "{}")); } catch (e) {}
+
+/* ---------- seri ---------- */
+const brandsOf = c => Object.keys(DATA[c]).sort((a, b) => a.localeCompare(b, "tr"));
+function series(c, brand){
+  // Markalar hiçbir yerde birleştirilmez: her seri tek markanın.
+  // Ciro/sipariş null = o gün için Shopify verisi yok (0 ile karışmasın).
+  const s = DATA[c][brand];
+  const meta = c === "d2c" ? s.metaSpend : s.spend;
+  const google = c === "d2c" && s.googleSpend ? s.googleSpend : DAYS.map(() => 0);
+  const spend = DAYS.map((_, i) => meta[i] + google[i]);
+  const revenue = s.revenue || DAYS.map(() => null), orders = s.orders || DAYS.map(() => null);
+  return {spend, meta, google, revenue, orders, clicks: s.clicks, impressions: s.impressions,
+          roasSpend: DAYS.map((_, i) => revenue[i] === null ? 0 : spend[i]),
+          hasRevenue: !!s.revenue, hasGoogle: !!(c === "d2c" && s.googleSpend)};
+}
+const idxOf = m => DAYS.map((d, i) => d.startsWith(m) ? i : -1).filter(i => i >= 0);
+
+/* Ay istatistiği: gerçekleşen, tahmin, bugüne kadar beklenen, günlük gereken. */
+function stats(c, brand, m){
+  const s = series(c, brand), idx = idxOf(m), n = dim(m), isCur = m === CUR_MONTH;
+  const full = idx.filter(i => DAYS[i] !== TODAY);                    // tamamlanmış günler
+  const done = isCur ? +TODAY.slice(8) - 1 : n;
+  const pick = (k, ids) => sum(ids.map(i => s[k][i]));
+  const rev = pick("revenue", idx), ord = pick("orders", idx), spend = pick("spend", idx);
+  const revFull = pick("revenue", full), ordFull = pick("orders", full), spendFull = pick("spend", full), roasSpendFull = pick("roasSpend", full);
+  const proj = (v, vFull) => isCur ? (done ? vFull / done * n : null) : v;
+  // Geçen ayın aynı gün sayısı (tamamlanmış günlerle kıyas)
+  const pm = prevMonth(m), pIdx = idxOf(pm).slice(0, isCur ? done : n);
+  // Geçen ay kıyası yalnız o ayın tamamı pencerede ve cirosu eksiksizse.
+  const covered = ids => ids.every(i => s.revenue[i] !== null);
+  const prevComplete = idxOf(pm).length === dim(pm) && covered(pIdx);
+  const missing = s.hasRevenue ? idx.filter(i => s.revenue[i] === null).length : 0;
+  return {
+    s, idx, n, isCur, done, rev, ord, spend,
+    meta: pick("meta", idx), google: pick("google", idx),
+    roas: pick("roasSpend", idx) ? rev / pick("roasSpend", idx) : 0,
+    revFull, ordFull, spendFull, roasSpendFull, projRev: proj(rev, revFull), projOrd: proj(ord, ordFull),
+    prevRev: prevComplete && pIdx.length ? pick("revenue", pIdx) : null,
+    prevOrd: prevComplete && pIdx.length ? pick("orders", pIdx) : null,
+    prevSpend: prevComplete && pIdx.length ? pick("spend", pIdx) : null,
+    prevRoasSpend: prevComplete && pIdx.length ? pick("roasSpend", pIdx) : null,
+    prevRevFull: prevComplete && pIdx.length ? pick("revenue", pIdx) : null,
+    partial: idx.length < n && !isCur, missing,
+    firstData: missing ? DAYS[idx.find(i => s.revenue[i] !== null)] : null,
+  };
+}
+function targetOf(c, brand, m){
+  return targets[`${m}|${c}|${brand}`] || null;
+}
+// Shopify kaydı ayın ortasında başlıyorsa (60 gün sınırı) rakam eksik gün içerir.
+const missingNote = st => st.missing ? `Shopify verisi yalnız ${dayLabel(st.firstData)} ve sonrası (${st.missing} gün yok)` : "";
+/* Durum: ay sonu tahmini hedefin neresinde? */
+function status(proj, goal){
+  if (!goal) return {txt: "Hedef girilmedi", col: "--neutral-bar"};
+  if (proj === null) return {txt: "Ayın ilk günü", col: "--neutral-bar"};
+  const r = proj / goal;
+  if (r >= 1) return {txt: "Hedefte", col: "--pos"};
+  if (r >= 0.9) return {txt: "Az geride", col: "--warn"};
+  return {txt: "Geride", col: "--crit"};
+}
+
+/* ---------- özet şeridi ---------- */
+function summaryCard(brand){
+  const st = stats(ch, brand, month);
+  const st0 = st, noShop = ch === "d2c" && !DATA.d2c[brand].revenue;
+  // Ayın bir kısmında Shopify verisi yoksa ay toplamı/ROAS yanıltır: gösterilmez.
+  const noRev = noShop || st0.missing > 0;
+  const t = TARGET_CH.includes(ch) ? targetOf(ch, brand, month) : null;
+  const cmp = st.isCur ? "geçen ayın aynı günlerine göre" : "önceki aya göre";
+  const roasFull = st.roasSpendFull ? st.revFull / st.roasSpendFull : 0;
+  const prevRoas = st.prevRoasSpend ? st.prevRev / st.prevRoasSpend : null;
+  const kv = (k, v, sub) => `<div><dt>${k}</dt><dd>${v}<small>${sub || ""}</small></dd></div>`;
+  return `<article class="sum">
+    <div class="sum-head"><span class="sum-name">${esc(brand)}</span><span class="sum-lbl">ROAS</span></div>
+    <div class="sum-roas"><b>${noRev ? "—" : roasF(st.roas)}</b>${noRev ? `<span class="meter-sub">${noShop ? "Shopify bağlı değil" : missingNote(st)}</span>`
+      : prevRoas ? `<span class="meter-sub">${delta(roasFull, prevRoas)} ${cmp}</span>` : ""}</div>
+    <dl class="sum-kv">
+      ${kv("Ciro", noRev ? "—" : money(st.rev), noRev ? "" : st.missing ? missingNote(st) : t && t.revenue ? "hedefin " + pctF(st.rev / t.revenue) + "'i" : delta(st.revFull, st.prevRev))}
+      ${kv("Sipariş", noRev ? "—" : num(st.ord), noRev ? "" : t && t.orders ? "hedefin " + pctF(st.ord / t.orders) + "'i" : delta(st.ordFull, st.prevOrd))}
+      ${kv("Harcama", money(st.spend), ch === "d2c" ? `Meta ${money(st.meta)} · Google ${DATA.d2c[brand].googleSpend ? money(st.google) : "—"}` : delta(st.spendFull, st.prevSpend))}
+      ${kv(st.isCur ? "Ay sonu tahmini" : "Ay toplamı", noRev ? "—" : money(st.isCur ? st.projRev : st.rev), noRev ? "" : st.isCur ? `${st.done} / ${st.n} gün tamam` : "")}
+    </dl>
+  </article>`;
+}
+function renderKpis(){
+  document.getElementById("ozet-sub").textContent = `${monthName(month)} · ${month === CUR_MONTH ? "ay başından bugüne" : "tam ay"}`;
+  document.getElementById("kpis").innerHTML = brandsOf(ch).map(summaryCard).join("");
+}
+
+/* ---------- hedef kartları ---------- */
+function meter(label, actual, goal, expectFrac, fmt, colVar){
+  if (!goal) return `<div class="meter"><div class="meter-top"><span>${label}</span><b>${fmt(actual)}</b></div>
+    <div class="bar"><i style="width:0"></i></div><div class="meter-sub">hedef yok</div></div>`;
+  const p = actual / goal;
+  return `<div class="meter">
+    <div class="meter-top"><span>${label} · <b>${fmt(actual)}</b> / ${fmt(goal)}</span><span class="pct">${pctF(p)}</span></div>
+    <div class="bar" role="img" aria-label="${label} hedefin ${pctF(p)}'i, beklenen ${pctF(expectFrac)}">
+      <i style="width:${Math.min(100, p * 100)}%"></i><u style="left:calc(${Math.min(100, expectFrac * 100)}% - 1px)"></u></div>
+    <div class="meter-sub">bugüne kadar beklenen ${fmt(goal * expectFrac)} · ${actual >= goal * expectFrac ? "önde" : "geride"} ${fmt(Math.abs(actual - goal * expectFrac))}</div>
+  </div>`;
+}
+function card(brand){
+  const st = stats(ch, brand, month), t = targetOf(ch, brand, month) || {};
+  const noRev = ch === "d2c" && !DATA.d2c[brand].revenue;
+  const sts = noRev ? {txt: "Shopify bağlı değil", col: "--neutral-bar"} : status(st.projRev, t.revenue);
+  const expect = st.isCur ? st.done / st.n : 1;
+  const left = st.n - (st.isCur ? st.done : st.n);
+  const needRev = t.revenue && left ? Math.max(0, t.revenue - st.rev) / left : null;
+  const needOrd = t.orders && left ? Math.max(0, t.orders - st.ord) / left : null;
+  const key = `${month}|${ch}|${brand}`;
+  return `<article class="card" style="--st:var(${sts.col})" data-brand="${esc(brand)}">
+    <div class="card-head"><span class="card-name">${esc(brand)}</span><span class="status">${sts.txt}</span></div>
+    ${noRev ? `<p class="empty">Ciro ve sipariş Shopify bağlanınca görünür; harcama ${money(st.spend)}.</p>` :
+      (st.missing ? `<p class="empty">${missingNote(st)} — hedef kıyası eksik veriyle yapılıyor.</p>` : "") +
+      meter("Ciro", st.rev, t.revenue, expect, money) + meter("Sipariş", st.ord, t.orders, expect, num)}
+    ${noRev ? "" : `<dl class="facts">
+      <div><dt>Ay sonu tahmini</dt><dd>${money(st.projRev)}<small>${t.revenue && st.projRev !== null ? "hedefin " + pctF(st.projRev / t.revenue) + "'i" : st.isCur ? "dünkü ortalamayla" : "kapanış"}</small></dd></div>
+      <div><dt>Günlük gereken</dt><dd>${needRev !== null ? money(needRev) : "—"}<small>${needOrd !== null ? num(Math.ceil(needOrd)) + " sipariş/gün · " + left + " gün kaldı" : left ? left + " gün kaldı" : "ay bitti"}</small></dd></div>
+      <div><dt>Harcama</dt><dd>${money(st.spend)}<small>${ch === "d2c" ? `Meta ${money(st.meta)} · Google ${DATA.d2c[brand].googleSpend ? money(st.google) : "—"}` : delta(st.spendFull, st.prevSpend) + " geçen ay aynı döneme göre"}</small></dd></div>
+      <div><dt>ROAS</dt><dd>${roasF(st.roas)}<small>${st.ord ? "sipariş başı " + money(st.spend / st.ord) : "sipariş yok"}</small></dd></div>
+    </dl>`}
+    <div class="card-foot">
+      <span class="meter-sub">${st.prevRev !== null && !noRev ? "geçen ay aynı dönem " + money(st.prevRev) + " " + delta(st.revFull, st.prevRev) : ""}</span>
+      <button type="button" class="btn" data-edit="${esc(key)}">${t.revenue || t.orders ? "Hedefi düzenle" : "Hedef gir"}</button>
+    </div>
+    <form class="edit" data-key="${esc(key)}" hidden>
+      <label>Ciro hedefi (₺)<input name="revenue" inputmode="numeric" value="${t.revenue ?? ""}" placeholder="ör. 500000"></label>
+      <label>Sipariş hedefi<input name="orders" inputmode="numeric" value="${t.orders ?? ""}" placeholder="ör. 300"></label>
+      <div class="row"><span class="msg">${monthName(month)} için</span>
+        <button type="button" class="btn" data-cancel>İptal</button><button class="btn primary">Kaydet</button></div>
+    </form>
+  </article>`;
+}
+function renderCards(){
+  const on = TARGET_CH.includes(ch);
+  document.getElementById("goal-sec").hidden = !on;
+  document.getElementById("cards").hidden = !on;
+  if (on) document.getElementById("cards").innerHTML = brandsOf(ch).map(card).join("");
+}
+
+/* ---------- hedef kaydı ---------- */
+const parseNum = v => { const t = String(v).replace(/[.\s₺]/g, "").replace(",", "."); return t === "" ? null : Number(t); };
+async function saveTarget(key, revenue, orders){
+  const [m, c, brand] = key.split("|");
+  const entry = {revenue, orders};
+  if (!HEDEF_API_URL){
+    // Kalıcı kayıt kurulmadı: yalnız bu tarayıcıda saklanır.
+    const local = JSON.parse(localStorage.getItem("hedefler-yerel") || "{}");
+    localStorage.setItem("hedefler-yerel", JSON.stringify({...local, [key]: entry}));
+    targets = {...targets, [key]: entry};
+    return "Bu tarayıcıya kaydedildi (ortak kayıt henüz kurulmadı).";
+  }
+  const res = await fetch(HEDEF_API_URL, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"},
+    body: JSON.stringify({month: m, channel: c, brand, revenue, orders})});
+  const body = await res.json();
+  if (!body.ok) throw new Error(body.error || "Kaydedilemedi");
+  targets = {...targets, ...body.targets};
+  return "Kaydedildi.";
+}
+document.getElementById("cards").addEventListener("click", e => {
+  const ed = e.target.closest("[data-edit]"), cancel = e.target.closest("[data-cancel]");
+  if (ed){ const f = ed.closest(".card").querySelector(".edit"); f.hidden = !f.hidden; if (!f.hidden) f.revenue.focus(); }
+  if (cancel) cancel.closest(".edit").hidden = true;
+});
+document.getElementById("cards").addEventListener("submit", async e => {
+  e.preventDefault();
+  const f = e.target, msg = f.querySelector(".msg"), btn = f.querySelector(".primary");
+  const revenue = parseNum(f.revenue.value), orders = parseNum(f.orders.value);
+  if ([revenue, orders].some(v => v !== null && (!isFinite(v) || v < 0))){ msg.textContent = "Sayı girin (boş bırakılabilir)."; return; }
+  btn.disabled = true; msg.textContent = "Kaydediliyor…";
+  try { msg.textContent = await saveTarget(f.dataset.key, revenue, orders); setTimeout(render, 600); }
+  catch (err){ msg.textContent = "Hata: " + err.message; }
+  finally { btn.disabled = false; }
+});
+
+/* ---------- grafikler ---------- */
+let charts = [];
+function chartBox(id, title, sub){ return `<div class="chart-box"><h3>${title}</h3><p>${sub}</p><div class="cv"><canvas id="${id}"></canvas></div></div>`; }
+function baseOpts(extra = {}){
+  const grid = css("--line-soft"), ink = css("--muted");
+  return {
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: {mode: "index", intersect: false},
+    plugins: {legend: {labels: {color: ink, boxWidth: 12, font: {size: 11}}},
+      tooltip: {callbacks: {label: c => `${c.dataset.label}: ${c.dataset.fmt ? c.dataset.fmt(c.parsed.y) : num(c.parsed.y)}`}}},
+    scales: {x: {grid: {display: false}, ticks: {color: ink, maxRotation: 0, autoSkipPadding: 8, font: {size: 11}}},
+             y: {grid: {color: grid}, ticks: {color: ink, font: {size: 11}, callback: v => f0.format(v)}, beginAtZero: true}},
+    ...extra,
+  };
+}
+function renderCharts(){
+  charts.forEach(c => c.destroy()); charts = [];
+  const brands = brandsOf(ch);
+  if (!brands.includes(brandSel)) brandSel = brands[0];
+  document.getElementById("brand-chips").innerHTML = brands.map(b =>
+    `<button type="button" class="chip-btn" data-b="${esc(b)}" aria-pressed="${b === brandSel}">${esc(b)}</button>`).join("");
+
+  const st = stats(ch, brandSel, month), s = st.s, idx = st.idx, n = st.n;
+  const t = TARGET_CH.includes(ch) ? targetOf(ch, brandSel, month) : null;
+  const A = css("--ch-a"), B = css("--ch-b"), C = css("--ch-c"), M = css("--muted");
+  const box = document.getElementById("charts");
+  const noRev = !s.hasRevenue, pm = prevMonth(month), pmName = monthName(pm);
+
+  // X ekseni ayın günleri (1…n): bu ay ile geçen ay aynı gün numarasında üst üste gelir.
+  const labels = Array.from({length: n}, (_, k) => `${k + 1} ${AYLAR[+month.slice(5) - 1].slice(0, 3)}`);
+  const byDay = (m, key) => {
+    const out = Array(n).fill(null);
+    idxOf(m).forEach(i => { const d = +DAYS[i].slice(8); if (d <= n) out[d - 1] = s[key][i]; });
+    return out;
+  };
+  const hasPrev = idxOf(pm).length > 0;
+  const todayCol = col => labels.map((_, k) => month === CUR_MONTH && k + 1 === +TODAY.slice(8) ? col + "66" : col);
+  const prevLine = (key, fmt) => hasPrev ? [{type: "line", label: pmName, data: byDay(pm, key), borderColor: B,
+    pointRadius: 2, pointBackgroundColor: B, borderWidth: 1.5, cubicInterpolationMode: "monotone", fmt}] : [];
+  const targetLine = (goal, fmt) => goal ? [{type: "line", label: "Günlük hedef", data: labels.map(() => goal / n),
+    borderColor: M, borderDash: [6, 5], pointRadius: 0, borderWidth: 1.5, fmt}] : [];
+  const sub = (goal) => `çubuk: ${monthName(month)}` + (hasPrev ? ` · çizgi: ${pmName} aynı gün` : "") + (goal ? " · kesikli: günlük hedef" : "");
+  const decimal = v => f2.format(v);
+
+  box.innerHTML = (noRev ? "" :
+      chartBox("c-cum", "Kümülatif ciro", st.missing ? missingNote(st) : (t && t.revenue ? "gerçekleşen · hedef çizgisi · ay sonu tahmini" : "gerçekleşen") + (hasPrev ? ` · ${pmName}` : "")) +
+      chartBox("c-daily", "Günlük ciro", sub(t && t.revenue))) +
+    chartBox("c-spend", "Günlük harcama", (ch === "d2c" ? "Meta + Google yığılı" : `çubuk: ${monthName(month)}`) + (hasPrev ? ` · çizgi: ${pmName} aynı gün` : "")) +
+    (noRev ? "" : chartBox("c-ord", "Günlük sipariş", sub(t && t.orders)));
+
+  const mk = (id, cfg) => { const el = document.getElementById(id); if (el) charts.push(new Chart(el, cfg)); };
+
+  if (!noRev){
+    // Kümülatif: gerçekleşen (bugün dahil), hedefe giden doğrusal çizgi, dünkü ortalamayla tahmin.
+    let run = 0; const cum = Array(n).fill(null);
+    idx.forEach(i => { if (s.revenue[i] !== null){ run += s.revenue[i]; cum[+DAYS[i].slice(8) - 1] = run; } });
+    const ds = [{label: "Gerçekleşen", data: cum, borderColor: A, backgroundColor: A + "22", fill: true, pointRadius: 0, borderWidth: 2.5, tension: .2, fmt: money}];
+    if (t && t.revenue) ds.push({label: "Hedef", data: labels.map((_, k) => t.revenue * (k + 1) / n), borderColor: M, borderDash: [6, 5], pointRadius: 0, borderWidth: 1.5, fmt: money});
+    if (st.isCur && st.done){
+      const rate = st.revFull / st.done;
+      ds.push({label: "Tahmin", data: labels.map((_, k) => k + 1 < st.done ? null : st.revFull + rate * (k + 1 - st.done)), borderColor: C, borderDash: [2, 4], pointRadius: 0, borderWidth: 2, fmt: money});
+    }
+    // Geçen ayın kümülatifi yalnız ayın tamamı varsa: yarım ay baştan başlamış gibi görünmesin.
+    if (hasPrev && byDay(pm, "revenue").slice(0, dim(pm)).every(v => v !== null)){
+      let r2 = 0; ds.push({label: pmName, data: byDay(pm, "revenue").map(v => v === null ? null : (r2 += v)), borderColor: B, pointRadius: 0, borderWidth: 1.5, tension: .2, fmt: money});
+    }
+    mk("c-cum", {type: "line", data: {labels, datasets: ds}, options: baseOpts()});
+
+    mk("c-daily", {data: {labels, datasets: [
+      {type: "bar", label: monthName(month), data: byDay(month, "revenue"), backgroundColor: todayCol(A), borderRadius: 3, fmt: money},
+      ...prevLine("revenue", money), ...targetLine(t && t.revenue, money)]}, options: baseOpts()});
+
+    mk("c-ord", {data: {labels, datasets: [
+      {type: "bar", label: monthName(month), data: byDay(month, "orders"), backgroundColor: todayCol(A), borderRadius: 3},
+      ...prevLine("orders", num), ...targetLine(t && t.orders, decimal)]}, options: baseOpts()});
+  }
+
+  // Harcama: yalnız harcama (ROAS kartlarda ve tabloda).
+  const sds = ch === "d2c"
+    ? [{type: "bar", label: "Meta", data: byDay(month, "meta"), backgroundColor: todayCol(A), stack: "s", fmt: money},
+       {type: "bar", label: "Google", data: byDay(month, "google"), backgroundColor: todayCol(C), stack: "s", fmt: money}]
+    : [{type: "bar", label: monthName(month), data: byDay(month, "spend"), backgroundColor: todayCol(A), borderRadius: 3, fmt: money}];
+  const so = baseOpts();
+  so.scales.x.stacked = true; so.scales.y.stacked = true;
+  mk("c-spend", {data: {labels, datasets: [...sds, ...prevLine("spend", money).map(d => ({...d, label: ch === "d2c" ? pmName + " (Meta + Google)" : pmName, stack: "p"}))]}, options: so});
+}
+document.getElementById("brand-chips").addEventListener("click", e => {
+  const b = e.target.closest("[data-b]"); if (!b) return;
+  brandSel = b.dataset.b; renderCharts(); renderTable();
+});
+
+/* ---------- tablo ---------- */
+function renderTable(){
+  const st = stats(ch, brandSel, month), s = st.s, d2c = ch === "d2c";
+  const cols = ["Gün", ...(d2c ? ["Meta", "Google"] : []), "Harcama", "Ciro", "Sipariş", "ROAS", "Sipariş başı", "Tıklama"];
+  document.getElementById("tb-sub").textContent = `${brandSel} · ${monthName(month)}`;
+  document.getElementById("thead").innerHTML = `<tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr>`;
+  const row = (lbl, sp, me, go, rv, od, rs, cl, cls = "") => `<tr class="${cls}"><td>${lbl}</td>${d2c ? `<td>${money(me)}</td><td>${s.hasGoogle ? money(go) : "—"}</td>` : ""}
+    <td>${money(sp)}</td><td>${s.hasRevenue ? money(rv) : "—"}</td><td>${s.hasRevenue ? num(od) : "—"}</td>
+    <td>${s.hasRevenue && rs ? roasF(rv / rs) : "—"}</td><td>${od ? money(sp / od) : "—"}</td><td>${num(cl)}</td></tr>`;
+  document.getElementById("tbody").innerHTML = st.idx.slice().reverse().map(i =>
+    row(dayLabel(DAYS[i]) + (DAYS[i] === TODAY ? " (bugün)" : ""), s.spend[i], s.meta[i], s.google[i], s.revenue[i], s.orders[i], s.roasSpend[i], s.clicks[i], DAYS[i] === TODAY ? "today" : "")).join("");
+  const p = k => sum(st.idx.map(i => s[k][i]));
+  document.getElementById("tfoot").innerHTML = row("Toplam", p("spend"), p("meta"), p("google"), p("revenue"), p("orders"), p("roasSpend"), p("clicks"));
+}
+
+/* ---------- çatı ---------- */
+// Son 3 ay; pencerenin en eski ayı yalnız karşılaştırma için tutuluyor.
+const months = [...new Set(DAYS.map(d => d.slice(0, 7)))].reverse().slice(0, 3);
+document.getElementById("months").innerHTML = months.map(m => `<button type="button" data-m="${m}">${monthName(m)}</button>`).join("");
+document.getElementById("months").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b){ month = b.dataset.m; render(); } });
+document.getElementById("tabs").addEventListener("click", e => { const b = e.target.closest("[data-ch]"); if (b){ ch = b.dataset.ch; brandSel = null; render(); } });
+document.getElementById("stamp").textContent = DATA.updated;
+
+function render(){
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.ch === ch)));
+  document.querySelectorAll("#months button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === month)));
+  document.getElementById("foot").textContent = CH_NOTES[ch];
+  renderKpis(); renderCards(); renderCharts(); renderTable();
+}
+render();
+
+// Kalıcı kayıttaki en güncel hedefler (sayfa derlendikten sonra girilenler dahil).
+if (HEDEF_API_URL){
+  fetch(HEDEF_API_URL).then(r => r.json()).then(b => { if (b.ok){ targets = {...targets, ...b.targets}; render(); } })
+    .catch(() => {});
+}
+</script>
+</body>
+</html>

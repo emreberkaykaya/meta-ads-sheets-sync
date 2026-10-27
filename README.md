@@ -1,3 +1,20 @@
+# Marka İzleme Paneli + Meta Ads → Google Sheets
+
+**Panel:** https://emreberkaykaya.github.io/meta-ads-sheets-sync/ — Trendyol · Hepsiburada ·
+D2C, son 3 ay, günlük grafikler, aylık ciro/sipariş hedef takibi.
+
+- `veri.py` — Meta (CPAS + D2C), Shopify ve Google Ads betiğinin Sheet sekmesinden gün gün seriler.
+  Shopify yalnız 60 gün okunabildiği için günler Sheet'in "Shopify Günlük" sekmesinde birikir.
+- `build_panel.py` — serileri `panel_template.html`'e gömüp `index.html` üretir.
+- `hedef_api.gs` — hedefleri Sheet'in "Hedefler" sekmesine yazan Apps Script web uygulaması;
+  /exec adresi `HEDEF_API_URL` secret'ına girer. Girilmeden hedefler yalnız tarayıcıda kalır.
+- `google_ads_script.js` — Google Ads hesabına kurulan, günlük harcamayı Sheet'e yazan betik.
+- `sync.py` — Sheet'in marka/D2C sekmelerini besler; panel de yardımcı fonksiyonlarını kullanır.
+
+Eski dönem-toplamı panel (`build_dashboard.py`) 2026-10-28'de bu panelle değiştirildi.
+
+---
+
 # Meta Ads → Google Sheets Anlık Rapor Senkronizasyonu
 
 Aqua di Polo, Frime, Pierre Cardin markalarının Trendyol/Hepsiburada CPAS

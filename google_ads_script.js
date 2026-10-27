@@ -16,8 +16,8 @@
 
 const SHEET_ID = "1REPLACE_WITH_GOOGLE_SHEET_ID";
 const BRAND = "Frime"; // ya da "Aqua di Polo" — sync.py'deki D2C marka adıyla birebir aynı
-// period_bounds()'taki en eski gün "Önceki Ay"ın ilk günü: en fazla ~92 gün önce.
-const DAYS = 100;
+// İzleme paneli 3 ay + karşılaştırma için 4 ay geriye bakar (en fazla ~123 gün).
+const DAYS = 130;
 
 function main() {
   const tz = AdsApp.currentAccount().getTimeZone();

@@ -1,4 +1,4 @@
-name: Daily Meta Ads Sync
+name: Marka izleme paneli
 
 on:
   # Her 2 saatte bir, günde 12 kez (00:15, 02:15, ... 22:15 UTC). Tamamen
@@ -24,8 +24,6 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    outputs:
-      dashboard-ready: ${{ steps.build.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -59,15 +57,31 @@ jobs:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: python sync.py
 
-      - name: Build dashboard
+      # İzleme paneli: günlük seriler + hedef takibi (veri.py → build_panel.py).
+      # Eski dönem-toplamı panel (build_dashboard.py) 2026-10-28'de kaldırıldı;
+      # sync.py hâlâ Sheet'in marka/D2C sekmelerini besliyor.
+      - name: Build panel
         id: build
         env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_ACCESS_TOKEN_AQUA_DI_POLO: ${{ secrets.META_ACCESS_TOKEN_AQUA_DI_POLO }}
+          META_ACCESS_TOKEN_FRIME: ${{ secrets.META_ACCESS_TOKEN_FRIME }}
+          META_ACCESS_TOKEN_PIERRE_CARDIN: ${{ secrets.META_ACCESS_TOKEN_PIERRE_CARDIN }}
+          SHOPIFY_ACCESS_TOKEN_FRIME: ${{ secrets.SHOPIFY_ACCESS_TOKEN_FRIME }}
+          SHOPIFY_SHOP_FRIME: ${{ secrets.SHOPIFY_SHOP_FRIME }}
+          SHOPIFY_ACCESS_TOKEN_AQUA_DI_POLO: ${{ secrets.SHOPIFY_ACCESS_TOKEN_AQUA_DI_POLO }}
+          SHOPIFY_SHOP_AQUA_DI_POLO: ${{ secrets.SHOPIFY_SHOP_AQUA_DI_POLO }}
+          SHOPIFY_ACCESS_TOKEN_MISSLIVA: ${{ secrets.SHOPIFY_ACCESS_TOKEN_MISSLIVA }}
+          SHOPIFY_SHOP_MISSLIVA: ${{ secrets.SHOPIFY_SHOP_MISSLIVA }}
+          SHOPIFY_CLIENT_ID_REPORTING: ${{ secrets.SHOPIFY_CLIENT_ID_REPORTING }}
+          SHOPIFY_CLIENT_SECRET_REPORTING: ${{ secrets.SHOPIFY_CLIENT_SECRET_REPORTING }}
           GOOGLE_SERVICE_ACCOUNT_FILE: ./service-account.json
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          HEDEF_API_URL: ${{ secrets.HEDEF_API_URL }}
         run: |
-          python build_dashboard.py
+          python build_panel.py
           mkdir -p _site
-          cp dashboard.html _site/index.html
+          cp index.html _site/index.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
