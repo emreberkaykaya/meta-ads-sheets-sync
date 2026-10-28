@@ -203,6 +203,14 @@ def write_shopify_cache(spreadsheet, cache) -> None:
     ws.update(range_name="A1", values=rows, value_input_option="RAW")
 
 
+def month_key(cell) -> str:
+    """Hedefler sekmesindeki ay hücresi: metin "2026-10" ya da Sheets'in tarihe
+    çevirdiği hâli (biçimlenmemiş okumada 1899-12-30'dan beri gün sayısı)."""
+    if isinstance(cell, (int, float)):
+        return (datetime(1899, 12, 30) + timedelta(days=cell)).strftime("%Y-%m")
+    return str(cell).strip()
+
+
 def read_targets(spreadsheet):
     """{"2026-10|trendyol|Frime": {"revenue": 500000, "orders": 300}}"""
     try:
@@ -213,7 +221,7 @@ def read_targets(spreadsheet):
     for row in ws.get_all_values(value_render_option="UNFORMATTED_VALUE")[1:]:
         if len(row) < 5 or not str(row[0]).strip():
             continue
-        key = f"{str(row[0]).strip()}|{str(row[1]).strip()}|{str(row[2]).strip()}"
+        key = f"{month_key(row[0])}|{str(row[1]).strip()}|{str(row[2]).strip()}"
         out[key] = {
             "revenue": float(row[3]) if row[3] not in ("", None) else None,
             "orders": float(row[4]) if row[4] not in ("", None) else None,

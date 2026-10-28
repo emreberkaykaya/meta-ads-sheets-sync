@@ -30,11 +30,18 @@ function sekme_() {
   return sh;
 }
 
+// Sheets "2026-10"u tarihe çevirebiliyor; hücre ne olursa olsun "yyyy-MM" döner.
+// getValues()'un Date'leri `instanceof Date` testini geçmiyor, tür etiketine bakılır.
+function ay_(v) {
+  return Object.prototype.toString.call(v) === "[object Date]"
+    ? Utilities.formatDate(v, "Europe/Istanbul", "yyyy-MM") : String(v);
+}
+
 function oku_() {
   const out = {};
   sekme_().getDataRange().getValues().slice(1).forEach(r => {
     if (!r[0]) return;
-    out[`${r[0]}|${r[1]}|${r[2]}`] = {
+    out[`${ay_(r[0])}|${r[1]}|${r[2]}`] = {
       revenue: r[3] === "" ? null : Number(r[3]),
       orders: r[4] === "" ? null : Number(r[4]),
     };
@@ -76,10 +83,11 @@ function doPost(e) {
     const row = [b.month, b.channel, b.brand,
                  b.revenue === null ? "" : b.revenue,
                  b.orders === null ? "" : b.orders, stamp];
-    const i = rows.findIndex((r, k) => k > 0 && r[0] === b.month &&
+    const i = rows.findIndex((r, k) => k > 0 && ay_(r[0]) === b.month &&
                                        r[1] === b.channel && r[2] === b.brand);
-    if (i > 0) sh.getRange(i + 1, 1, 1, row.length).setValues([row]);
-    else sh.appendRow(row);
+    const at = i > 0 ? i + 1 : sh.getLastRow() + 1;
+    sh.getRange(at, 1).setNumberFormat("@"); // ay metin olarak yazılsın
+    sh.getRange(at, 1, 1, row.length).setValues([row]);
   } finally {
     lock.releaseLock();
   }
