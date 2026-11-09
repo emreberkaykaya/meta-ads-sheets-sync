@@ -111,7 +111,9 @@ SHEET_HEADER = [
 D2C_META_ACCOUNTS = {
     "Frime": "2121533615302118",
     "Aqua di Polo": "1215686160473015",
-    "MissLiva": "1123824406969942",
+    # "Missliva.com". Eski MissLiva hesabı (1123824406969942) kapalı; 2026-11-09'a
+    # kadar burada o vardı ve panelde MissLiva harcaması 0 görünüyordu.
+    "MissLiva": "1585933623231067",
 }
 
 # Marka -> (SHOPIFY_ACCESS_TOKEN_ENV_VAR, SHOPIFY_SHOP_ENV_VAR)
